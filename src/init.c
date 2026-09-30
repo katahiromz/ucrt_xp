@@ -55,10 +55,10 @@ static void ucrt_xp_fatal_abi_mismatch(DWORD expected, DWORD actual)
     case IDIGNORE:
         return;
     }
+#endif
     /* Do not attempt any further ucrt_xp / CRT usage past this point -
      * the state of the runtime cannot be trusted. */
     TerminateProcess(GetCurrentProcess(), (UINT)0xC0000409 /* STATUS_STACK_BUFFER_OVERRUN-ish sentinel */);
-#endif
 }
 
 __declspec(dllexport) BOOL __cdecl ucrt_xp_init(DWORD expected_abi_version)
