@@ -17,7 +17,6 @@
 #include "internal.h"
 #include <stdio.h>
 #include <stdarg.h>
-#include <assert.h>
 
 /* ------------------------------------------------------------------ */
 /* Descriptor table                                                    */
@@ -377,7 +376,6 @@ struct UCRT_XP_FILE {
  * catch. */
 static BOOL validate_file(const UCRT_XP_FILE *f)
 {
-    assert(f != NULL && f->magic == UCRT_XP_FILE_MAGIC);
     return f != NULL && f->magic == UCRT_XP_FILE_MAGIC;
 }
 
