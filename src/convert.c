@@ -616,9 +616,6 @@ __declspec(dllexport) char* __cdecl ucrt_xp_ui64toa(unsigned __int64 value, char
     return i64toa_unsigned(value, str, radix, 0);
 }
 
-typedef struct UCRT_XP_DIV_T { int quot; int rem; } UCRT_XP_DIV_T;
-typedef struct UCRT_XP_LDIV_T { long quot; long rem; } UCRT_XP_LDIV_T;
-
 __declspec(dllexport) UCRT_XP_DIV_T __cdecl ucrt_xp_div(int numer, int denom)
 {
     UCRT_XP_DIV_T r;
