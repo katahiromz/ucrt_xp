@@ -141,7 +141,7 @@ static FdEntry *get_fd(int fd)
     return e;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_open(const char *path, int oflag, int pmode)
+UCRT_XP_API int __cdecl ucrt_xp_open(const char *path, int oflag, int pmode)
 {
     DWORD access = 0, creation = OPEN_EXISTING;
     DWORD share = FILE_SHARE_READ | FILE_SHARE_WRITE;
@@ -192,7 +192,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_open(const char *path, int oflag, int 
     return fd;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_close(int fd)
+UCRT_XP_API int __cdecl ucrt_xp_close(int fd)
 {
     FdEntry *e = get_fd(fd);
     if (!e) return -1;
@@ -217,7 +217,7 @@ static void reseek_if_append(FdEntry *e)
     }
 }
 
-__declspec(dllexport) long __cdecl ucrt_xp_read(int fd, void *buf, unsigned int count)
+UCRT_XP_API long __cdecl ucrt_xp_read(int fd, void *buf, unsigned int count)
 {
     FdEntry *e = get_fd(fd);
     DWORD got = 0;
@@ -242,7 +242,7 @@ __declspec(dllexport) long __cdecl ucrt_xp_read(int fd, void *buf, unsigned int 
     return (long)got;
 }
 
-__declspec(dllexport) long __cdecl ucrt_xp_write(int fd, const void *buf, unsigned int count)
+UCRT_XP_API long __cdecl ucrt_xp_write(int fd, const void *buf, unsigned int count)
 {
     FdEntry *e = get_fd(fd);
     DWORD written = 0;
@@ -293,7 +293,7 @@ __declspec(dllexport) long __cdecl ucrt_xp_write(int fd, const void *buf, unsign
     }
 }
 
-__declspec(dllexport) __int64 __cdecl ucrt_xp_lseek(int fd, __int64 offset, int origin)
+UCRT_XP_API __int64 __cdecl ucrt_xp_lseek(int fd, __int64 offset, int origin)
 {
     FdEntry *e = get_fd(fd);
     LARGE_INTEGER li, out;
@@ -445,7 +445,7 @@ UCRT_XP_FILE *ucrt_xp__file_from_fd(int fd)
     return make_file_from_fd(fd, 1);
 }
 
-__declspec(dllexport) UCRT_XP_FILE* __cdecl ucrt_xp_fopen(const char *path, const char *mode)
+UCRT_XP_API UCRT_XP_FILE* __cdecl ucrt_xp_fopen(const char *path, const char *mode)
 {
     int oflag, fd;
 
@@ -472,13 +472,13 @@ static int flush_write_buffer(UCRT_XP_FILE *f)
     return 0;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_fflush(UCRT_XP_FILE *f)
+UCRT_XP_API int __cdecl ucrt_xp_fflush(UCRT_XP_FILE *f)
 {
     if (!validate_file(f)) return -1;
     return flush_write_buffer(f);
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_fclose(UCRT_XP_FILE *f)
+UCRT_XP_API int __cdecl ucrt_xp_fclose(UCRT_XP_FILE *f)
 {
     int rc = 0;
     if (!validate_file(f)) return -1;
@@ -504,7 +504,7 @@ static long refill_read_buffer(UCRT_XP_FILE *f)
     return got;
 }
 
-__declspec(dllexport) size_t __cdecl ucrt_xp_fread(
+UCRT_XP_API size_t __cdecl ucrt_xp_fread(
     void *buf, size_t size, size_t count, UCRT_XP_FILE *f)
 {
     unsigned char *out = (unsigned char *)buf;
@@ -547,7 +547,7 @@ __declspec(dllexport) size_t __cdecl ucrt_xp_fread(
     return copied / size;
 }
 
-__declspec(dllexport) size_t __cdecl ucrt_xp_fwrite(
+UCRT_XP_API size_t __cdecl ucrt_xp_fwrite(
     const void *buf, size_t size, size_t count, UCRT_XP_FILE *f)
 {
     const unsigned char *in = (const unsigned char *)buf;
@@ -583,7 +583,7 @@ __declspec(dllexport) size_t __cdecl ucrt_xp_fwrite(
     return copied / size;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_fseek(UCRT_XP_FILE *f, long offset, int origin)
+UCRT_XP_API int __cdecl ucrt_xp_fseek(UCRT_XP_FILE *f, long offset, int origin)
 {
     __int64 r;
     if (!validate_file(f)) return -1;
@@ -599,7 +599,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_fseek(UCRT_XP_FILE *f, long offset, in
     return (r < 0) ? -1 : 0;
 }
 
-__declspec(dllexport) long __cdecl ucrt_xp_ftell(UCRT_XP_FILE *f)
+UCRT_XP_API long __cdecl ucrt_xp_ftell(UCRT_XP_FILE *f)
 {
     __int64 pos;
     if (!validate_file(f)) return -1;
@@ -615,7 +615,7 @@ __declspec(dllexport) long __cdecl ucrt_xp_ftell(UCRT_XP_FILE *f)
     return (long)pos;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_fgetc(UCRT_XP_FILE *f)
+UCRT_XP_API int __cdecl ucrt_xp_fgetc(UCRT_XP_FILE *f)
 {
     unsigned char c;
     /* No separate validate_file() call needed - ucrt_xp_fread() already
@@ -625,31 +625,31 @@ __declspec(dllexport) int __cdecl ucrt_xp_fgetc(UCRT_XP_FILE *f)
     return (int)c;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_fputc(int c, UCRT_XP_FILE *f)
+UCRT_XP_API int __cdecl ucrt_xp_fputc(int c, UCRT_XP_FILE *f)
 {
     unsigned char ch = (unsigned char)c;
     if (ucrt_xp_fwrite(&ch, 1, 1, f) != 1) return -1;
     return (int)ch;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_feof(UCRT_XP_FILE *f)
+UCRT_XP_API int __cdecl ucrt_xp_feof(UCRT_XP_FILE *f)
 {
     return validate_file(f) ? f->eof : 0;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_ferror(UCRT_XP_FILE *f)
+UCRT_XP_API int __cdecl ucrt_xp_ferror(UCRT_XP_FILE *f)
 {
     return validate_file(f) ? f->error : 0;
 }
 
-__declspec(dllexport) void __cdecl ucrt_xp_clearerr(UCRT_XP_FILE *f)
+UCRT_XP_API void __cdecl ucrt_xp_clearerr(UCRT_XP_FILE *f)
 {
     if (!validate_file(f)) return;
     f->eof = 0;
     f->error = 0;
 }
 
-__declspec(dllexport) void __cdecl ucrt_xp_rewind(UCRT_XP_FILE *f)
+UCRT_XP_API void __cdecl ucrt_xp_rewind(UCRT_XP_FILE *f)
 {
     if (!validate_file(f)) return;
     ucrt_xp_fseek(f, 0, UCRT_XP_SEEK_SET);
@@ -657,12 +657,12 @@ __declspec(dllexport) void __cdecl ucrt_xp_rewind(UCRT_XP_FILE *f)
     f->error = 0;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_fileno(UCRT_XP_FILE *f)
+UCRT_XP_API int __cdecl ucrt_xp_fileno(UCRT_XP_FILE *f)
 {
     return validate_file(f) ? f->fd : -1;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_ungetc(int c, UCRT_XP_FILE *f)
+UCRT_XP_API int __cdecl ucrt_xp_ungetc(int c, UCRT_XP_FILE *f)
 {
     if (!validate_file(f) || c == -1 /* EOF */) return -1;
     if (f->dir == STREAM_WRITING) {
@@ -677,7 +677,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_ungetc(int c, UCRT_XP_FILE *f)
     return (unsigned char)c;
 }
 
-__declspec(dllexport) char* __cdecl ucrt_xp_fgets(char *s, int n, UCRT_XP_FILE *f)
+UCRT_XP_API char* __cdecl ucrt_xp_fgets(char *s, int n, UCRT_XP_FILE *f)
 {
     int i = 0;
     int c;
@@ -697,7 +697,7 @@ __declspec(dllexport) char* __cdecl ucrt_xp_fgets(char *s, int n, UCRT_XP_FILE *
     return s;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_fputs(const char *s, UCRT_XP_FILE *f)
+UCRT_XP_API int __cdecl ucrt_xp_fputs(const char *s, UCRT_XP_FILE *f)
 {
     size_t len, written;
     if (!s || !validate_file(f)) return -1;
@@ -706,19 +706,19 @@ __declspec(dllexport) int __cdecl ucrt_xp_fputs(const char *s, UCRT_XP_FILE *f)
     return (written == len) ? 0 : -1;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_remove(const char *path)
+UCRT_XP_API int __cdecl ucrt_xp_remove(const char *path)
 {
     if (!path) return -1;
     return DeleteFileA(path) ? 0 : -1;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_rename(const char *oldpath, const char *newpath)
+UCRT_XP_API int __cdecl ucrt_xp_rename(const char *oldpath, const char *newpath)
 {
     if (!oldpath || !newpath) return -1;
     return MoveFileA(oldpath, newpath) ? 0 : -1;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_fprintf(UCRT_XP_FILE *f, const char *fmt, ...)
+UCRT_XP_API int __cdecl ucrt_xp_fprintf(UCRT_XP_FILE *f, const char *fmt, ...)
 {
     char stackbuf[512];
     char *heapbuf = NULL;
@@ -750,7 +750,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_fprintf(UCRT_XP_FILE *f, const char *f
     return (written == needed) ? written : -1;
 }
 
-__declspec(dllexport) UCRT_XP_FILE* __cdecl ucrt_xp_fdopen(int fd, const char *mode)
+UCRT_XP_API UCRT_XP_FILE* __cdecl ucrt_xp_fdopen(int fd, const char *mode)
 {
     int oflag;
     UCRT_XP_FILE *f;
@@ -762,7 +762,7 @@ __declspec(dllexport) UCRT_XP_FILE* __cdecl ucrt_xp_fdopen(int fd, const char *m
     return f;
 }
 
-__declspec(dllexport) UCRT_XP_FILE* __cdecl ucrt_xp_freopen(
+UCRT_XP_API UCRT_XP_FILE* __cdecl ucrt_xp_freopen(
     const char *path, const char *mode, UCRT_XP_FILE *f)
 {
     int oflag;
@@ -792,7 +792,7 @@ __declspec(dllexport) UCRT_XP_FILE* __cdecl ucrt_xp_freopen(
     return f;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_setvbuf(
+UCRT_XP_API int __cdecl ucrt_xp_setvbuf(
     UCRT_XP_FILE *f, char *buf, int mode, size_t size)
 {
     /* mode: 0=_IOFBF full, 1=_IOLBF line, 2=_IONBF none.
@@ -837,7 +837,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_setvbuf(
     return 0;
 }
 
-__declspec(dllexport) void __cdecl ucrt_xp_setbuf(UCRT_XP_FILE *f, char *buf)
+UCRT_XP_API void __cdecl ucrt_xp_setbuf(UCRT_XP_FILE *f, char *buf)
 {
     if (buf)
         ucrt_xp_setvbuf(f, buf, 0 /* _IOFBF */, UCRT_XP_BUFSIZE);
@@ -845,7 +845,7 @@ __declspec(dllexport) void __cdecl ucrt_xp_setbuf(UCRT_XP_FILE *f, char *buf)
         ucrt_xp_setvbuf(f, NULL, 2 /* _IONBF */, 0);
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_fseeki64(
+UCRT_XP_API int __cdecl ucrt_xp_fseeki64(
     UCRT_XP_FILE *f, __int64 offset, int origin)
 {
     __int64 r;
@@ -862,7 +862,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_fseeki64(
     return (r < 0) ? -1 : 0;
 }
 
-__declspec(dllexport) __int64 __cdecl ucrt_xp_ftelli64(UCRT_XP_FILE *f)
+UCRT_XP_API __int64 __cdecl ucrt_xp_ftelli64(UCRT_XP_FILE *f)
 {
     __int64 pos;
     if (!validate_file(f)) return -1;
@@ -883,7 +883,7 @@ __declspec(dllexport) __int64 __cdecl ucrt_xp_ftelli64(UCRT_XP_FILE *f)
 /* Filesystem helpers (_access / _stat / _mkdir / _getcwd / _chdir)    */
 /* ------------------------------------------------------------------ */
 
-__declspec(dllexport) int __cdecl ucrt_xp_access(const char *path, int mode)
+UCRT_XP_API int __cdecl ucrt_xp_access(const char *path, int mode)
 {
     DWORD attrs;
     if (!path) return -1;
@@ -895,19 +895,19 @@ __declspec(dllexport) int __cdecl ucrt_xp_access(const char *path, int mode)
     return 0;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_mkdir(const char *path)
+UCRT_XP_API int __cdecl ucrt_xp_mkdir(const char *path)
 {
     if (!path) return -1;
     return CreateDirectoryA(path, NULL) ? 0 : -1;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_chdir(const char *path)
+UCRT_XP_API int __cdecl ucrt_xp_chdir(const char *path)
 {
     if (!path) return -1;
     return SetCurrentDirectoryA(path) ? 0 : -1;
 }
 
-__declspec(dllexport) char* __cdecl ucrt_xp_getcwd(char *buf, int maxlen)
+UCRT_XP_API char* __cdecl ucrt_xp_getcwd(char *buf, int maxlen)
 {
     DWORD n;
     if (!buf || maxlen <= 0) return NULL;
@@ -916,7 +916,7 @@ __declspec(dllexport) char* __cdecl ucrt_xp_getcwd(char *buf, int maxlen)
     return buf;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_stat(const char *path, UCRT_XP_STAT *st)
+UCRT_XP_API int __cdecl ucrt_xp_stat(const char *path, UCRT_XP_STAT *st)
 {
     WIN32_FILE_ATTRIBUTE_DATA fad;
     ULARGE_INTEGER sz, ct, mt, at;
@@ -1016,19 +1016,19 @@ static BOOL __cdecl init_std_streams(void *param)
  * glibc's stdout being `(&_IO_2_1_stdout_)` vs. a modern MSVC CRT's
  * stdout being defined as a macro around __acrt_iob_func(1)).
  */
-__declspec(dllexport) UCRT_XP_FILE* __cdecl ucrt_xp_stdin(void)
+UCRT_XP_API UCRT_XP_FILE* __cdecl ucrt_xp_stdin(void)
 {
     ucrt_xp_once(&g_std_streams_once, init_std_streams, NULL);
     return g_stdin;
 }
 
-__declspec(dllexport) UCRT_XP_FILE* __cdecl ucrt_xp_stdout(void)
+UCRT_XP_API UCRT_XP_FILE* __cdecl ucrt_xp_stdout(void)
 {
     ucrt_xp_once(&g_std_streams_once, init_std_streams, NULL);
     return g_stdout;
 }
 
-__declspec(dllexport) UCRT_XP_FILE* __cdecl ucrt_xp_stderr(void)
+UCRT_XP_API UCRT_XP_FILE* __cdecl ucrt_xp_stderr(void)
 {
     ucrt_xp_once(&g_std_streams_once, init_std_streams, NULL);
     return g_stderr;
@@ -1038,7 +1038,7 @@ __declspec(dllexport) UCRT_XP_FILE* __cdecl ucrt_xp_stderr(void)
 /* stdout-targeted convenience functions                               */
 /* ------------------------------------------------------------------ */
 
-__declspec(dllexport) int __cdecl ucrt_xp_printf(const char *fmt, ...)
+UCRT_XP_API int __cdecl ucrt_xp_printf(const char *fmt, ...)
 {
     UCRT_XP_FILE *f = ucrt_xp_stdout();
     char stackbuf[512];
@@ -1068,7 +1068,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_printf(const char *fmt, ...)
     return (written == needed) ? written : -1;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_puts(const char *s)
+UCRT_XP_API int __cdecl ucrt_xp_puts(const char *s)
 {
     UCRT_XP_FILE *f = ucrt_xp_stdout();
     size_t len;
@@ -1080,12 +1080,12 @@ __declspec(dllexport) int __cdecl ucrt_xp_puts(const char *s)
     return 0; /* non-negative on success, matching the standard's contract */
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_putchar(int c)
+UCRT_XP_API int __cdecl ucrt_xp_putchar(int c)
 {
     return ucrt_xp_fputc(c, ucrt_xp_stdout());
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_getchar(void)
+UCRT_XP_API int __cdecl ucrt_xp_getchar(void)
 {
     return ucrt_xp_fgetc(ucrt_xp_stdin());
 }
@@ -1100,7 +1100,7 @@ typedef struct FindCtx {
     WIN32_FIND_DATAA fd;
 } FindCtx;
 
-__declspec(dllexport) intptr_t __cdecl ucrt_xp_findfirst(const char *filespec, UCRT_XP_FINDDATA *data)
+UCRT_XP_API intptr_t __cdecl ucrt_xp_findfirst(const char *filespec, UCRT_XP_FINDDATA *data)
 {
     FindCtx *ctx;
     if (!filespec || !data) return -1;
@@ -1121,7 +1121,7 @@ __declspec(dllexport) intptr_t __cdecl ucrt_xp_findfirst(const char *filespec, U
     return (intptr_t)ctx;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_findnext(intptr_t handle, UCRT_XP_FINDDATA *data)
+UCRT_XP_API int __cdecl ucrt_xp_findnext(intptr_t handle, UCRT_XP_FINDDATA *data)
 {
     FindCtx *ctx = (FindCtx *)handle;
     if (!ctx || !data || ctx->h == INVALID_HANDLE_VALUE) return -1;
@@ -1133,7 +1133,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_findnext(intptr_t handle, UCRT_XP_FIND
     return 0;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_findclose(intptr_t handle)
+UCRT_XP_API int __cdecl ucrt_xp_findclose(intptr_t handle)
 {
     FindCtx *ctx = (FindCtx *)handle;
     if (!ctx) return -1;
@@ -1146,7 +1146,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_findclose(intptr_t handle)
 /* fd extras: dup, setmode, osfhandle, eof, lseeki64 aliases           */
 /* ------------------------------------------------------------------ */
 
-__declspec(dllexport) int __cdecl ucrt_xp_dup(int fd)
+UCRT_XP_API int __cdecl ucrt_xp_dup(int fd)
 {
     FdEntry *e = get_fd(fd);
     HANDLE hdup;
@@ -1188,7 +1188,7 @@ static int ensure_fd_slot(int fd)
     return 0;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_dup2(int fd1, int fd2)
+UCRT_XP_API int __cdecl ucrt_xp_dup2(int fd1, int fd2)
 {
     FdEntry *e1;
     HANDLE hdup;
@@ -1232,7 +1232,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_dup2(int fd1, int fd2)
     return fd2;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_setmode(int fd, int mode)
+UCRT_XP_API int __cdecl ucrt_xp_setmode(int fd, int mode)
 {
     FdEntry *e = get_fd(fd);
     int prev;
@@ -1244,21 +1244,21 @@ __declspec(dllexport) int __cdecl ucrt_xp_setmode(int fd, int mode)
     return prev;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_commit(int fd)
+UCRT_XP_API int __cdecl ucrt_xp_commit(int fd)
 {
     FdEntry *e = get_fd(fd);
     if (!e) return -1;
     return FlushFileBuffers(e->handle) ? 0 : -1;
 }
 
-__declspec(dllexport) intptr_t __cdecl ucrt_xp_get_osfhandle(int fd)
+UCRT_XP_API intptr_t __cdecl ucrt_xp_get_osfhandle(int fd)
 {
     FdEntry *e = get_fd(fd);
     if (!e) return -1;
     return (intptr_t)e->handle;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_open_osfhandle(intptr_t osfhandle, int flags)
+UCRT_XP_API int __cdecl ucrt_xp_open_osfhandle(intptr_t osfhandle, int flags)
 {
     HANDLE h = (HANDLE)osfhandle;
     if (h == NULL || h == INVALID_HANDLE_VALUE) return -1;
@@ -1267,7 +1267,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_open_osfhandle(intptr_t osfhandle, int
                     (flags & UCRT_XP_O_APPEND) ? 1 : 0);
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_eof(int fd)
+UCRT_XP_API int __cdecl ucrt_xp_eof(int fd)
 {
     FdEntry *e = get_fd(fd);
     LARGE_INTEGER pos, size, zero;
@@ -1278,17 +1278,17 @@ __declspec(dllexport) int __cdecl ucrt_xp_eof(int fd)
     return pos.QuadPart >= size.QuadPart ? 1 : 0;
 }
 
-__declspec(dllexport) __int64 __cdecl ucrt_xp_lseeki64(int fd, __int64 offset, int origin)
+UCRT_XP_API __int64 __cdecl ucrt_xp_lseeki64(int fd, __int64 offset, int origin)
 {
     return ucrt_xp_lseek(fd, offset, origin);
 }
 
-__declspec(dllexport) __int64 __cdecl ucrt_xp_telli64(int fd)
+UCRT_XP_API __int64 __cdecl ucrt_xp_telli64(int fd)
 {
     return ucrt_xp_lseek(fd, 0, UCRT_XP_SEEK_CUR);
 }
 
-__declspec(dllexport) long __cdecl ucrt_xp_tell(int fd)
+UCRT_XP_API long __cdecl ucrt_xp_tell(int fd)
 {
     return (long)ucrt_xp_telli64(fd);
 }
@@ -1297,7 +1297,7 @@ __declspec(dllexport) long __cdecl ucrt_xp_tell(int fd)
 /* fgetpos / fsetpos                                                   */
 /* ------------------------------------------------------------------ */
 
-__declspec(dllexport) int __cdecl ucrt_xp_fgetpos(UCRT_XP_FILE *f, __int64 *pos)
+UCRT_XP_API int __cdecl ucrt_xp_fgetpos(UCRT_XP_FILE *f, __int64 *pos)
 {
     __int64 p;
     if (!f || !pos || f->magic != UCRT_XP_FILE_MAGIC) return -1;
@@ -1307,7 +1307,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_fgetpos(UCRT_XP_FILE *f, __int64 *pos)
     return 0;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_fsetpos(UCRT_XP_FILE *f, const __int64 *pos)
+UCRT_XP_API int __cdecl ucrt_xp_fsetpos(UCRT_XP_FILE *f, const __int64 *pos)
 {
     if (!f || !pos || f->magic != UCRT_XP_FILE_MAGIC) return -1;
     return ucrt_xp_fseeki64(f, *pos, UCRT_XP_SEEK_SET);
@@ -1317,7 +1317,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_fsetpos(UCRT_XP_FILE *f, const __int64
 /* Path helpers: fullpath, makepath, splitpath, rmdir, unlink          */
 /* ------------------------------------------------------------------ */
 
-__declspec(dllexport) char* __cdecl ucrt_xp_fullpath(char *absPath, const char *relPath, size_t maxLength)
+UCRT_XP_API char* __cdecl ucrt_xp_fullpath(char *absPath, const char *relPath, size_t maxLength)
 {
     DWORD n;
     if (!relPath || !absPath || maxLength == 0) return NULL;
@@ -1326,7 +1326,7 @@ __declspec(dllexport) char* __cdecl ucrt_xp_fullpath(char *absPath, const char *
     return absPath;
 }
 
-__declspec(dllexport) void __cdecl ucrt_xp_splitpath(const char *path, char *drive, char *dir, char *fname, char *ext)
+UCRT_XP_API void __cdecl ucrt_xp_splitpath(const char *path, char *drive, char *dir, char *fname, char *ext)
 {
     const char *p = path ? path : "";
     const char *slash, *dot;
@@ -1364,7 +1364,7 @@ __declspec(dllexport) void __cdecl ucrt_xp_splitpath(const char *path, char *dri
     }
 }
 
-__declspec(dllexport) void __cdecl ucrt_xp_makepath(char *path, const char *drive, const char *dir, const char *fname, const char *ext)
+UCRT_XP_API void __cdecl ucrt_xp_makepath(char *path, const char *drive, const char *dir, const char *fname, const char *ext)
 {
     char *p;
     if (!path) return;
@@ -1389,13 +1389,13 @@ __declspec(dllexport) void __cdecl ucrt_xp_makepath(char *path, const char *driv
     }
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_rmdir(const char *path)
+UCRT_XP_API int __cdecl ucrt_xp_rmdir(const char *path)
 {
     if (!path) return -1;
     return RemoveDirectoryA(path) ? 0 : -1;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_unlink(const char *path)
+UCRT_XP_API int __cdecl ucrt_xp_unlink(const char *path)
 {
     if (!path) return -1;
     return DeleteFileA(path) ? 0 : -1;
@@ -1405,7 +1405,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_unlink(const char *path)
 /* tmpnam / tmpfile                                                    */
 /* ------------------------------------------------------------------ */
 
-__declspec(dllexport) char* __cdecl ucrt_xp_tmpnam(char *s)
+UCRT_XP_API char* __cdecl ucrt_xp_tmpnam(char *s)
 {
     static char static_buf[MAX_PATH];
     static unsigned counter = 0;
@@ -1419,7 +1419,7 @@ __declspec(dllexport) char* __cdecl ucrt_xp_tmpnam(char *s)
     return out;
 }
 
-__declspec(dllexport) UCRT_XP_FILE* __cdecl ucrt_xp_tmpfile(void)
+UCRT_XP_API UCRT_XP_FILE* __cdecl ucrt_xp_tmpfile(void)
 {
     char name[MAX_PATH];
     UCRT_XP_FILE *f;

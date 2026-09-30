@@ -21,7 +21,7 @@
  */
 #include "internal.h"
 
-__declspec(dllexport) BOOL __cdecl ucrt_xp_cond_init(UCRT_XP_COND *cv)
+UCRT_XP_API BOOL __cdecl ucrt_xp_cond_init(UCRT_XP_COND *cv)
 {
     if (!cv) return FALSE;
     ZeroMemory(cv, sizeof(*cv));
@@ -29,7 +29,7 @@ __declspec(dllexport) BOOL __cdecl ucrt_xp_cond_init(UCRT_XP_COND *cv)
     return TRUE;
 }
 
-__declspec(dllexport) void __cdecl ucrt_xp_cond_destroy(UCRT_XP_COND *cv)
+UCRT_XP_API void __cdecl ucrt_xp_cond_destroy(UCRT_XP_COND *cv)
 {
     /* Nothing to release: no kernel objects are created any more, and
      * the native CONDITION_VARIABLE has no destructor either. Destroying
@@ -37,7 +37,7 @@ __declspec(dllexport) void __cdecl ucrt_xp_cond_destroy(UCRT_XP_COND *cv)
     (void)cv;
 }
 
-__declspec(dllexport) BOOL __cdecl ucrt_xp_cond_wait(
+UCRT_XP_API BOOL __cdecl ucrt_xp_cond_wait(
     UCRT_XP_COND *cv, CRITICAL_SECTION *external_lock, DWORD timeout_ms)
 {
     if (!cv) {
@@ -48,13 +48,13 @@ __declspec(dllexport) BOOL __cdecl ucrt_xp_cond_wait(
         (UCRT_XP_CONDITION_VARIABLE *)cv, external_lock, timeout_ms);
 }
 
-__declspec(dllexport) void __cdecl ucrt_xp_cond_signal(UCRT_XP_COND *cv)
+UCRT_XP_API void __cdecl ucrt_xp_cond_signal(UCRT_XP_COND *cv)
 {
     if (!cv) return;
     ucrt_xp_WakeConditionVariable((UCRT_XP_CONDITION_VARIABLE *)cv);
 }
 
-__declspec(dllexport) void __cdecl ucrt_xp_cond_broadcast(UCRT_XP_COND *cv)
+UCRT_XP_API void __cdecl ucrt_xp_cond_broadcast(UCRT_XP_COND *cv)
 {
     if (!cv) return;
     ucrt_xp_WakeAllConditionVariable((UCRT_XP_CONDITION_VARIABLE *)cv);

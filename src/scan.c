@@ -456,7 +456,7 @@ static int do_vscanf(ScanSrc *s, const char *fmt, va_list args)
     return assigned;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_vsscanf(const char *str, const char *fmt, va_list args)
+UCRT_XP_API int __cdecl ucrt_xp_vsscanf(const char *str, const char *fmt, va_list args)
 {
     ScanSrc s;
     if (!str || !fmt) return -1;
@@ -466,7 +466,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_vsscanf(const char *str, const char *f
     return do_vscanf(&s, fmt, args);
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_sscanf(const char *str, const char *fmt, ...)
+UCRT_XP_API int __cdecl ucrt_xp_sscanf(const char *str, const char *fmt, ...)
 {
     int r;
     va_list args;
@@ -476,7 +476,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_sscanf(const char *str, const char *fm
     return r;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_vfscanf(UCRT_XP_FILE *f, const char *fmt, va_list args)
+UCRT_XP_API int __cdecl ucrt_xp_vfscanf(UCRT_XP_FILE *f, const char *fmt, va_list args)
 {
     ScanSrc s;
     if (!f || !fmt) return -1;
@@ -486,7 +486,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_vfscanf(UCRT_XP_FILE *f, const char *f
     return do_vscanf(&s, fmt, args);
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_fscanf(UCRT_XP_FILE *f, const char *fmt, ...)
+UCRT_XP_API int __cdecl ucrt_xp_fscanf(UCRT_XP_FILE *f, const char *fmt, ...)
 {
     int r;
     va_list args;
@@ -496,7 +496,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_fscanf(UCRT_XP_FILE *f, const char *fm
     return r;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_scanf(const char *fmt, ...)
+UCRT_XP_API int __cdecl ucrt_xp_scanf(const char *fmt, ...)
 {
     int r;
     va_list args;

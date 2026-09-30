@@ -10,7 +10,7 @@
 #include "internal.h"
 #include <string.h> /* for size_t only in some toolchains' <windows.h> setups */
 
-__declspec(dllexport) void* __cdecl ucrt_xp_memcpy(void *dst, const void *src, size_t n)
+UCRT_XP_API void* __cdecl ucrt_xp_memcpy(void *dst, const void *src, size_t n)
 {
     /* CopyMemory/RtlCopyMemory assumes non-overlapping regions, exactly
      * like the standard's memcpy() contract - callers with overlap must
@@ -19,19 +19,19 @@ __declspec(dllexport) void* __cdecl ucrt_xp_memcpy(void *dst, const void *src, s
     return dst;
 }
 
-__declspec(dllexport) void* __cdecl ucrt_xp_memmove(void *dst, const void *src, size_t n)
+UCRT_XP_API void* __cdecl ucrt_xp_memmove(void *dst, const void *src, size_t n)
 {
     MoveMemory(dst, src, n); /* MoveMemory is overlap-safe on Win32 */
     return dst;
 }
 
-__declspec(dllexport) void* __cdecl ucrt_xp_memset(void *dst, int c, size_t n)
+UCRT_XP_API void* __cdecl ucrt_xp_memset(void *dst, int c, size_t n)
 {
     FillMemory(dst, n, (BYTE)c);
     return dst;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_memcmp(const void *a, const void *b, size_t n)
+UCRT_XP_API int __cdecl ucrt_xp_memcmp(const void *a, const void *b, size_t n)
 {
     const unsigned char *pa = (const unsigned char *)a;
     const unsigned char *pb = (const unsigned char *)b;
@@ -42,7 +42,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_memcmp(const void *a, const void *b, s
     return 0;
 }
 
-__declspec(dllexport) void* __cdecl ucrt_xp_memchr(const void *buf, int c, size_t n)
+UCRT_XP_API void* __cdecl ucrt_xp_memchr(const void *buf, int c, size_t n)
 {
     const unsigned char *p = (const unsigned char *)buf;
     size_t i;
@@ -52,7 +52,7 @@ __declspec(dllexport) void* __cdecl ucrt_xp_memchr(const void *buf, int c, size_
     return NULL;
 }
 
-__declspec(dllexport) size_t __cdecl ucrt_xp_strlen(const char *s)
+UCRT_XP_API size_t __cdecl ucrt_xp_strlen(const char *s)
 {
     const char *p = s;
     if (!s) return 0;
@@ -60,7 +60,7 @@ __declspec(dllexport) size_t __cdecl ucrt_xp_strlen(const char *s)
     return (size_t)(p - s);
 }
 
-__declspec(dllexport) char* __cdecl ucrt_xp_strcpy(char *dst, const char *src)
+UCRT_XP_API char* __cdecl ucrt_xp_strcpy(char *dst, const char *src)
 {
     char *d = dst;
     if (!dst || !src) return dst;
@@ -68,7 +68,7 @@ __declspec(dllexport) char* __cdecl ucrt_xp_strcpy(char *dst, const char *src)
     return dst;
 }
 
-__declspec(dllexport) char* __cdecl ucrt_xp_strncpy(char *dst, const char *src, size_t n)
+UCRT_XP_API char* __cdecl ucrt_xp_strncpy(char *dst, const char *src, size_t n)
 {
     size_t i = 0;
     if (!dst) return dst;
@@ -79,7 +79,7 @@ __declspec(dllexport) char* __cdecl ucrt_xp_strncpy(char *dst, const char *src, 
     return dst;
 }
 
-__declspec(dllexport) char* __cdecl ucrt_xp_strcat(char *dst, const char *src)
+UCRT_XP_API char* __cdecl ucrt_xp_strcat(char *dst, const char *src)
 {
     char *d = dst;
     if (!dst || !src) return dst;
@@ -88,7 +88,7 @@ __declspec(dllexport) char* __cdecl ucrt_xp_strcat(char *dst, const char *src)
     return dst;
 }
 
-__declspec(dllexport) char* __cdecl ucrt_xp_strncat(char *dst, const char *src, size_t n)
+UCRT_XP_API char* __cdecl ucrt_xp_strncat(char *dst, const char *src, size_t n)
 {
     char *d = dst;
     size_t i = 0;
@@ -101,14 +101,14 @@ __declspec(dllexport) char* __cdecl ucrt_xp_strncat(char *dst, const char *src, 
     return dst;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_strcmp(const char *a, const char *b)
+UCRT_XP_API int __cdecl ucrt_xp_strcmp(const char *a, const char *b)
 {
     if (!a || !b) return (a == b) ? 0 : (a ? 1 : -1);
     while (*a && (*a == *b)) { a++; b++; }
     return (int)(unsigned char)*a - (int)(unsigned char)*b;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_strncmp(const char *a, const char *b, size_t n)
+UCRT_XP_API int __cdecl ucrt_xp_strncmp(const char *a, const char *b, size_t n)
 {
     size_t i;
     if (!a || !b) return (a == b) ? 0 : (a ? 1 : -1);
@@ -120,7 +120,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_strncmp(const char *a, const char *b, 
     return 0;
 }
 
-__declspec(dllexport) char* __cdecl ucrt_xp_strchr(const char *s, int c)
+UCRT_XP_API char* __cdecl ucrt_xp_strchr(const char *s, int c)
 {
     if (!s) return NULL;
     for (; *s; s++) {
@@ -129,7 +129,7 @@ __declspec(dllexport) char* __cdecl ucrt_xp_strchr(const char *s, int c)
     return (c == 0) ? (char *)s : NULL; /* strchr(s, '\0') finds the NUL */
 }
 
-__declspec(dllexport) char* __cdecl ucrt_xp_strrchr(const char *s, int c)
+UCRT_XP_API char* __cdecl ucrt_xp_strrchr(const char *s, int c)
 {
     const char *found = NULL;
     if (!s) return NULL;
@@ -140,7 +140,7 @@ __declspec(dllexport) char* __cdecl ucrt_xp_strrchr(const char *s, int c)
     return (char *)found;
 }
 
-__declspec(dllexport) char* __cdecl ucrt_xp_strstr(const char *haystack, const char *needle)
+UCRT_XP_API char* __cdecl ucrt_xp_strstr(const char *haystack, const char *needle)
 {
     size_t nlen;
     if (!haystack || !needle) return NULL;
@@ -153,7 +153,7 @@ __declspec(dllexport) char* __cdecl ucrt_xp_strstr(const char *haystack, const c
     return NULL;
 }
 
-__declspec(dllexport) char* __cdecl ucrt_xp_strdup(const char *s)
+UCRT_XP_API char* __cdecl ucrt_xp_strdup(const char *s)
 {
     size_t len;
     char *copy;
@@ -171,7 +171,7 @@ __declspec(dllexport) char* __cdecl ucrt_xp_strdup(const char *s)
  * the old single-argument ergonomics can keep their own char* saveptr
  * local variable across calls - that's the whole difference.
  */
-__declspec(dllexport) char* __cdecl ucrt_xp_strtok_r(char *str, const char *delim, char **saveptr)
+UCRT_XP_API char* __cdecl ucrt_xp_strtok_r(char *str, const char *delim, char **saveptr)
 {
     char *start;
     char *p;
@@ -201,7 +201,7 @@ __declspec(dllexport) char* __cdecl ucrt_xp_strtok_r(char *str, const char *deli
 
 /* Case-insensitive compare of at most n characters (MSVC _strnicmp).
  * Stops at the first NUL in either string, same as the real CRT. */
-__declspec(dllexport) int __cdecl ucrt_xp_strnicmp(
+UCRT_XP_API int __cdecl ucrt_xp_strnicmp(
     const char *a, const char *b, size_t n)
 {
     size_t la, lb;
@@ -225,7 +225,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_strnicmp(
 /* ------------------------------------------------------------------ */
 
 /* Length of the initial segment of s consisting only of bytes in accept. */
-__declspec(dllexport) size_t __cdecl ucrt_xp_strspn(const char *s, const char *accept)
+UCRT_XP_API size_t __cdecl ucrt_xp_strspn(const char *s, const char *accept)
 {
     const char *p = s;
     if (!s || !accept) return 0;
@@ -236,7 +236,7 @@ __declspec(dllexport) size_t __cdecl ucrt_xp_strspn(const char *s, const char *a
 }
 
 /* Length of the initial segment of s containing no bytes from reject. */
-__declspec(dllexport) size_t __cdecl ucrt_xp_strcspn(const char *s, const char *reject)
+UCRT_XP_API size_t __cdecl ucrt_xp_strcspn(const char *s, const char *reject)
 {
     const char *p = s;
     if (!s) return 0;
@@ -248,7 +248,7 @@ __declspec(dllexport) size_t __cdecl ucrt_xp_strcspn(const char *s, const char *
 }
 
 /* First byte in s that matches any byte in accept, or NULL. */
-__declspec(dllexport) char* __cdecl ucrt_xp_strpbrk(const char *s, const char *accept)
+UCRT_XP_API char* __cdecl ucrt_xp_strpbrk(const char *s, const char *accept)
 {
     if (!s || !accept) return NULL;
     for (; *s; s++) {
@@ -257,7 +257,7 @@ __declspec(dllexport) char* __cdecl ucrt_xp_strpbrk(const char *s, const char *a
     return NULL;
 }
 
-__declspec(dllexport) size_t __cdecl ucrt_xp_strnlen(const char *s, size_t maxlen)
+UCRT_XP_API size_t __cdecl ucrt_xp_strnlen(const char *s, size_t maxlen)
 {
     size_t i;
     if (!s) return 0;
@@ -275,7 +275,7 @@ __declspec(dllexport) size_t __cdecl ucrt_xp_strnlen(const char *s, size_t maxle
  * (included) or after n bytes, whichever comes first. Returns a pointer
  * to the byte after the copy of c, or NULL if c was not found within n.
  * Classic MSVC/Unix memccpy semantics. */
-__declspec(dllexport) void* __cdecl ucrt_xp_memccpy(void *dst, const void *src, int c, size_t n)
+UCRT_XP_API void* __cdecl ucrt_xp_memccpy(void *dst, const void *src, int c, size_t n)
 {
     unsigned char *d = (unsigned char *)dst;
     const unsigned char *s = (const unsigned char *)src;
@@ -293,7 +293,7 @@ __declspec(dllexport) void* __cdecl ucrt_xp_memccpy(void *dst, const void *src, 
 /* In-place lowercase conversion (MSVC _strlwr). Uses CharLowerA which
  * respects the system ANSI code page; for full locale control prefer
  * the _l variant or LCMapString. Returns the same pointer. */
-__declspec(dllexport) char* __cdecl ucrt_xp_strlwr(char *s)
+UCRT_XP_API char* __cdecl ucrt_xp_strlwr(char *s)
 {
     if (!s) return s;
     CharLowerA(s);
@@ -301,7 +301,7 @@ __declspec(dllexport) char* __cdecl ucrt_xp_strlwr(char *s)
 }
 
 /* In-place uppercase conversion (MSVC _strupr). */
-__declspec(dllexport) char* __cdecl ucrt_xp_strupr(char *s)
+UCRT_XP_API char* __cdecl ucrt_xp_strupr(char *s)
 {
     if (!s) return s;
     CharUpperA(s);
@@ -315,7 +315,7 @@ __declspec(dllexport) char* __cdecl ucrt_xp_strupr(char *s)
 /* Case-insensitive memcmp of at most n bytes (MSVC _memicmp).
  * Uses locale-independent ASCII folding for speed and predictability;
  * for full locale folding use CompareString on the relevant spans. */
-__declspec(dllexport) int __cdecl ucrt_xp_memicmp(const void *a, const void *b, size_t n)
+UCRT_XP_API int __cdecl ucrt_xp_memicmp(const void *a, const void *b, size_t n)
 {
     const unsigned char *pa = (const unsigned char *)a;
     const unsigned char *pb = (const unsigned char *)b;
@@ -333,7 +333,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_memicmp(const void *a, const void *b, 
 }
 
 /* Reverse a string in place (MSVC _strrev). Returns the same pointer. */
-__declspec(dllexport) char* __cdecl ucrt_xp_strrev(char *s)
+UCRT_XP_API char* __cdecl ucrt_xp_strrev(char *s)
 {
     char *lo, *hi;
     if (!s || !*s) return s;
@@ -348,12 +348,12 @@ __declspec(dllexport) char* __cdecl ucrt_xp_strrev(char *s)
 }
 
 /* POSIX strcasecmp / strncasecmp - aliases to the MSVC-style implementations. */
-__declspec(dllexport) int __cdecl ucrt_xp_strcasecmp(const char *a, const char *b)
+UCRT_XP_API int __cdecl ucrt_xp_strcasecmp(const char *a, const char *b)
 {
     return ucrt_xp_stricmp(a, b);
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_strncasecmp(const char *a, const char *b, size_t n)
+UCRT_XP_API int __cdecl ucrt_xp_strncasecmp(const char *a, const char *b, size_t n)
 {
     return ucrt_xp_strnicmp(a, b, n);
 }

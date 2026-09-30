@@ -41,7 +41,7 @@ static BOOL __cdecl init_errno_tls(void *param)
     return g_errno_tls != TLS_OUT_OF_INDEXES;
 }
 
-__declspec(dllexport) int* __cdecl ucrt_xp_errno_location(void)
+UCRT_XP_API int* __cdecl ucrt_xp_errno_location(void)
 {
     /* Returns a pointer to this thread's errno cell, lazily allocated -
      * the same "return a stable per-thread lvalue" pattern glibc's
@@ -71,12 +71,12 @@ __declspec(dllexport) int* __cdecl ucrt_xp_errno_location(void)
     return cell;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_get_errno(void)
+UCRT_XP_API int __cdecl ucrt_xp_get_errno(void)
 {
     return *ucrt_xp_errno_location();
 }
 
-__declspec(dllexport) void __cdecl ucrt_xp_set_errno(int value)
+UCRT_XP_API void __cdecl ucrt_xp_set_errno(int value)
 {
     *ucrt_xp_errno_location() = value;
 }
@@ -99,7 +99,7 @@ static BOOL __cdecl init_atexit_lock(void *param)
     return TRUE;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_atexit(UCRT_XP_ATEXIT_FN fn)
+UCRT_XP_API int __cdecl ucrt_xp_atexit(UCRT_XP_ATEXIT_FN fn)
 {
     ucrt_xp_once(&g_atexit_once, init_atexit_lock, NULL);
     if (!fn) return -1;
@@ -136,13 +136,13 @@ static void run_atexit_handlers(void)
     }
 }
 
-__declspec(dllexport) void __cdecl ucrt_xp_exit(int code)
+UCRT_XP_API void __cdecl ucrt_xp_exit(int code)
 {
     run_atexit_handlers();
     ExitProcess((UINT)code);
 }
 
-__declspec(dllexport) void __cdecl ucrt_xp_abort(void)
+UCRT_XP_API void __cdecl ucrt_xp_abort(void)
 {
     /* Deliberately skips atexit handlers, matching the standard's
      * abort() contract (abnormal termination, not normal cleanup) - and
@@ -158,7 +158,7 @@ __declspec(dllexport) void __cdecl ucrt_xp_abort(void)
 /* strerror / perror                                                   */
 /* ------------------------------------------------------------------ */
 
-__declspec(dllexport) char* __cdecl ucrt_xp_strerror(int errnum)
+UCRT_XP_API char* __cdecl ucrt_xp_strerror(int errnum)
 {
     /* Minimal static table covering the errno values ported code most
      * often checks. Not a full POSIX catalog. */
@@ -179,7 +179,7 @@ __declspec(dllexport) char* __cdecl ucrt_xp_strerror(int errnum)
     }
 }
 
-__declspec(dllexport) void __cdecl ucrt_xp_perror(const char *s)
+UCRT_XP_API void __cdecl ucrt_xp_perror(const char *s)
 {
     const char *msg = ucrt_xp_strerror(ucrt_xp_get_errno());
     UCRT_XP_FILE *err = ucrt_xp_stderr();
@@ -195,7 +195,7 @@ __declspec(dllexport) void __cdecl ucrt_xp_perror(const char *s)
 /* getenv / system                                                     */
 /* ------------------------------------------------------------------ */
 
-__declspec(dllexport) char* __cdecl ucrt_xp_getenv(const char *name)
+UCRT_XP_API char* __cdecl ucrt_xp_getenv(const char *name)
 {
     /* Classic getenv returns a pointer into a static buffer that is
      * overwritten on subsequent calls. Match that contract. */
@@ -207,7 +207,7 @@ __declspec(dllexport) char* __cdecl ucrt_xp_getenv(const char *name)
     return buf;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_system(const char *command)
+UCRT_XP_API int __cdecl ucrt_xp_system(const char *command)
 {
     STARTUPINFOA si;
     PROCESS_INFORMATION pi;
@@ -248,14 +248,14 @@ __declspec(dllexport) int __cdecl ucrt_xp_system(const char *command)
 /* Process identity / environment                                      */
 /* ------------------------------------------------------------------ */
 
-__declspec(dllexport) int __cdecl ucrt_xp_getpid(void)
+UCRT_XP_API int __cdecl ucrt_xp_getpid(void)
 {
     return (int)GetCurrentProcessId();
 }
 
 /* _putenv: argument is "NAME=value" or "NAME=" (to clear). Returns 0
  * on success, -1 on failure. Matches MSVC's non-_s form. */
-__declspec(dllexport) int __cdecl ucrt_xp_putenv(const char *envstring)
+UCRT_XP_API int __cdecl ucrt_xp_putenv(const char *envstring)
 {
     char *copy, *eq;
     size_t len;
@@ -287,7 +287,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_putenv(const char *envstring)
  * psize is a hint (ignored on Win32 beyond security attrs). text_mode
  * selects UCRT text translation on the resulting descriptors.
  * Returns 0 on success, -1 on failure. */
-__declspec(dllexport) int __cdecl ucrt_xp_pipe(int *pipedes, unsigned int psize, int text_mode)
+UCRT_XP_API int __cdecl ucrt_xp_pipe(int *pipedes, unsigned int psize, int text_mode)
 {
     SECURITY_ATTRIBUTES sa;
     HANDLE rd = NULL, wr = NULL;
@@ -378,7 +378,7 @@ static HANDLE popen_unregister(UCRT_XP_FILE *f)
 /* mode: "r" reads child stdout; "w" writes child stdin. Optional 't'/'b'
  * for text/binary (default text). Runs via COMSPEC (/c), matching MSVC
  * _popen so shell metacharacters work. Returns a UCRT_XP_FILE* or NULL. */
-__declspec(dllexport) UCRT_XP_FILE* __cdecl ucrt_xp_popen(const char *command, const char *mode)
+UCRT_XP_API UCRT_XP_FILE* __cdecl ucrt_xp_popen(const char *command, const char *mode)
 {
     SECURITY_ATTRIBUTES sa;
     HANDLE pipe_rd = NULL, pipe_wr = NULL;
@@ -486,7 +486,7 @@ __declspec(dllexport) UCRT_XP_FILE* __cdecl ucrt_xp_popen(const char *command, c
     return f;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_pclose(UCRT_XP_FILE *f)
+UCRT_XP_API int __cdecl ucrt_xp_pclose(UCRT_XP_FILE *f)
 {
     HANDLE proc;
     DWORD code = (DWORD)-1;
@@ -638,17 +638,17 @@ static intptr_t spawnve_internal(int mode, const char *cmdname,
     }
 }
 
-__declspec(dllexport) intptr_t __cdecl ucrt_xp_spawnv(int mode, const char *cmdname, const char *const *argv)
+UCRT_XP_API intptr_t __cdecl ucrt_xp_spawnv(int mode, const char *cmdname, const char *const *argv)
 {
     return spawnve_internal(mode, cmdname, argv, 0);
 }
 
-__declspec(dllexport) intptr_t __cdecl ucrt_xp_spawnvp(int mode, const char *cmdname, const char *const *argv)
+UCRT_XP_API intptr_t __cdecl ucrt_xp_spawnvp(int mode, const char *cmdname, const char *const *argv)
 {
     return spawnve_internal(mode, cmdname, argv, 1);
 }
 
-__declspec(dllexport) intptr_t __cdecl ucrt_xp_spawnl(int mode, const char *cmdname, const char *arg0, ...)
+UCRT_XP_API intptr_t __cdecl ucrt_xp_spawnl(int mode, const char *cmdname, const char *arg0, ...)
 {
     /* Collect varargs into a temporary argv array (max 64 args). */
     const char *argv[64];
@@ -666,7 +666,7 @@ __declspec(dllexport) intptr_t __cdecl ucrt_xp_spawnl(int mode, const char *cmdn
     return spawnve_internal(mode, cmdname, argv, 0);
 }
 
-__declspec(dllexport) intptr_t __cdecl ucrt_xp_spawnlp(int mode, const char *cmdname, const char *arg0, ...)
+UCRT_XP_API intptr_t __cdecl ucrt_xp_spawnlp(int mode, const char *cmdname, const char *arg0, ...)
 {
     const char *argv[64];
     va_list ap;
@@ -684,17 +684,17 @@ __declspec(dllexport) intptr_t __cdecl ucrt_xp_spawnlp(int mode, const char *cmd
 }
 
 /* exec* approximate overlay (spawn with P_OVERLAY). */
-__declspec(dllexport) intptr_t __cdecl ucrt_xp_execv(const char *cmdname, const char *const *argv)
+UCRT_XP_API intptr_t __cdecl ucrt_xp_execv(const char *cmdname, const char *const *argv)
 {
     return spawnve_internal(UCRT_XP_P_OVERLAY, cmdname, argv, 0);
 }
 
-__declspec(dllexport) intptr_t __cdecl ucrt_xp_execvp(const char *cmdname, const char *const *argv)
+UCRT_XP_API intptr_t __cdecl ucrt_xp_execvp(const char *cmdname, const char *const *argv)
 {
     return spawnve_internal(UCRT_XP_P_OVERLAY, cmdname, argv, 1);
 }
 
-__declspec(dllexport) intptr_t __cdecl ucrt_xp_execl(const char *cmdname, const char *arg0, ...)
+UCRT_XP_API intptr_t __cdecl ucrt_xp_execl(const char *cmdname, const char *arg0, ...)
 {
     const char *argv[64];
     va_list ap;
@@ -711,7 +711,7 @@ __declspec(dllexport) intptr_t __cdecl ucrt_xp_execl(const char *cmdname, const 
     return spawnve_internal(UCRT_XP_P_OVERLAY, cmdname, argv, 0);
 }
 
-__declspec(dllexport) intptr_t __cdecl ucrt_xp_execlp(const char *cmdname, const char *arg0, ...)
+UCRT_XP_API intptr_t __cdecl ucrt_xp_execlp(const char *cmdname, const char *arg0, ...)
 {
     const char *argv[64];
     va_list ap;
@@ -808,7 +808,7 @@ static DWORD WINAPI beginthread_trampoline(void *param)
     return code; /* not reached */
 }
 
-__declspec(dllexport) uintptr_t __cdecl ucrt_xp_beginthread(
+UCRT_XP_API uintptr_t __cdecl ucrt_xp_beginthread(
     void (__cdecl *start_address)(void *), unsigned stack_size, void *arglist)
 {
     BeginThreadCtx *ctx;
@@ -839,7 +839,7 @@ __declspec(dllexport) uintptr_t __cdecl ucrt_xp_beginthread(
     return (uintptr_t)h;
 }
 
-__declspec(dllexport) uintptr_t __cdecl ucrt_xp_beginthreadex(
+UCRT_XP_API uintptr_t __cdecl ucrt_xp_beginthreadex(
     void *security, unsigned stack_size,
     unsigned (__stdcall *start_address)(void *), void *arglist,
     unsigned initflag, unsigned *thrdaddr)
@@ -869,13 +869,13 @@ __declspec(dllexport) uintptr_t __cdecl ucrt_xp_beginthreadex(
     return (uintptr_t)h;
 }
 
-__declspec(dllexport) void __cdecl ucrt_xp_endthread(void)
+UCRT_XP_API void __cdecl ucrt_xp_endthread(void)
 {
     thread_crt_detach();
     ExitThread(0);
 }
 
-__declspec(dllexport) void __cdecl ucrt_xp_endthreadex(unsigned retval)
+UCRT_XP_API void __cdecl ucrt_xp_endthreadex(unsigned retval)
 {
     thread_crt_detach();
     ExitThread(retval);
@@ -886,7 +886,7 @@ __declspec(dllexport) void __cdecl ucrt_xp_endthreadex(unsigned retval)
 /* assert                                                              */
 /* ------------------------------------------------------------------ */
 
-__declspec(dllexport) void __cdecl ucrt_xp_assert(const char *expr, const char *file, unsigned line)
+UCRT_XP_API void __cdecl ucrt_xp_assert(const char *expr, const char *file, unsigned line)
 {
     char buf[1024];
     wsprintfA(buf,

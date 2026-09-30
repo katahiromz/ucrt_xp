@@ -39,14 +39,17 @@ include_directories(include)
 add_library(ucrt_xp SHARED ${UCRT_XP_SOURCES} src/ucrt_xp.def)
 target_compile_definitions(ucrt_xp PRIVATE UCRT_XP_BUILD_DLL)
 set_target_properties(ucrt_xp PROPERTIES PREFIX "")
+# Consumers of the DLL define nothing: UCRT_XP_API then expands to
+# __declspec(dllimport). Only the DLL build itself defines UCRT_XP_BUILD_DLL.
 
 # --- Static subset (single-exe / offline deployment) -------------------
-# Same sources, no dllexport plumbing needed since UCRT_XP_BUILD_DLL is
-# not defined; the __declspec(dllexport) tags in the public header only
-# apply when building the DLL. For the static target we still compile
-# the same .c files, but they end up as ordinary linkable symbols.
+# UCRT_XP_STATIC is PUBLIC so that both the library and everything linking
+# it see UCRT_XP_API as empty (no dllexport/dllimport). Without it, users
+# of the static lib would expect __imp_ symbols that do not exist, and the
+# final EXE would wrongly export the ucrt_xp_* functions.
 add_library(ucrt_xp_static STATIC ${UCRT_XP_SOURCES})
 set_target_properties(ucrt_xp_static PROPERTIES OUTPUT_NAME "ucrt_xp_static")
+target_compile_definitions(ucrt_xp_static PUBLIC UCRT_XP_STATIC)
 
 # --- Examples -------------------------------------------------------
 add_executable(hello_example examples/hello.c)

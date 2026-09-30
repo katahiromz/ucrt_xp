@@ -67,24 +67,24 @@ static unsigned char classify(int c)
     return g_ctype_table[c];
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_isalpha(int c)  { return (classify(c) & (UCRT_XP_CT_UPPER | UCRT_XP_CT_LOWER)) != 0; }
-__declspec(dllexport) int __cdecl ucrt_xp_isdigit(int c)  { return (classify(c) & UCRT_XP_CT_DIGIT) != 0; }
-__declspec(dllexport) int __cdecl ucrt_xp_isalnum(int c)  { return (classify(c) & (UCRT_XP_CT_UPPER | UCRT_XP_CT_LOWER | UCRT_XP_CT_DIGIT)) != 0; }
-__declspec(dllexport) int __cdecl ucrt_xp_isspace(int c)  { return (classify(c) & UCRT_XP_CT_SPACE) != 0; }
-__declspec(dllexport) int __cdecl ucrt_xp_isupper(int c)  { return (classify(c) & UCRT_XP_CT_UPPER) != 0; }
-__declspec(dllexport) int __cdecl ucrt_xp_islower(int c)  { return (classify(c) & UCRT_XP_CT_LOWER) != 0; }
-__declspec(dllexport) int __cdecl ucrt_xp_ispunct(int c)  { return (classify(c) & UCRT_XP_CT_PUNCT) != 0; }
-__declspec(dllexport) int __cdecl ucrt_xp_iscntrl(int c)  { return (classify(c) & UCRT_XP_CT_CNTRL) != 0; }
-__declspec(dllexport) int __cdecl ucrt_xp_isxdigit(int c) { return (classify(c) & UCRT_XP_CT_XDIGIT) != 0; }
-__declspec(dllexport) int __cdecl ucrt_xp_isprint(int c)  { return c >= 0x20 && c <= 0x7e; }
-__declspec(dllexport) int __cdecl ucrt_xp_isgraph(int c)  { return c > 0x20 && c <= 0x7e; }
+UCRT_XP_API int __cdecl ucrt_xp_isalpha(int c)  { return (classify(c) & (UCRT_XP_CT_UPPER | UCRT_XP_CT_LOWER)) != 0; }
+UCRT_XP_API int __cdecl ucrt_xp_isdigit(int c)  { return (classify(c) & UCRT_XP_CT_DIGIT) != 0; }
+UCRT_XP_API int __cdecl ucrt_xp_isalnum(int c)  { return (classify(c) & (UCRT_XP_CT_UPPER | UCRT_XP_CT_LOWER | UCRT_XP_CT_DIGIT)) != 0; }
+UCRT_XP_API int __cdecl ucrt_xp_isspace(int c)  { return (classify(c) & UCRT_XP_CT_SPACE) != 0; }
+UCRT_XP_API int __cdecl ucrt_xp_isupper(int c)  { return (classify(c) & UCRT_XP_CT_UPPER) != 0; }
+UCRT_XP_API int __cdecl ucrt_xp_islower(int c)  { return (classify(c) & UCRT_XP_CT_LOWER) != 0; }
+UCRT_XP_API int __cdecl ucrt_xp_ispunct(int c)  { return (classify(c) & UCRT_XP_CT_PUNCT) != 0; }
+UCRT_XP_API int __cdecl ucrt_xp_iscntrl(int c)  { return (classify(c) & UCRT_XP_CT_CNTRL) != 0; }
+UCRT_XP_API int __cdecl ucrt_xp_isxdigit(int c) { return (classify(c) & UCRT_XP_CT_XDIGIT) != 0; }
+UCRT_XP_API int __cdecl ucrt_xp_isprint(int c)  { return c >= 0x20 && c <= 0x7e; }
+UCRT_XP_API int __cdecl ucrt_xp_isgraph(int c)  { return c > 0x20 && c <= 0x7e; }
 
-__declspec(dllexport) int __cdecl ucrt_xp_toupper(int c)
+UCRT_XP_API int __cdecl ucrt_xp_toupper(int c)
 {
     return ucrt_xp_islower(c) ? c - ('a' - 'A') : c;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_tolower(int c)
+UCRT_XP_API int __cdecl ucrt_xp_tolower(int c)
 {
     return ucrt_xp_isupper(c) ? c + ('a' - 'A') : c;
 }
@@ -94,44 +94,44 @@ __declspec(dllexport) int __cdecl ucrt_xp_tolower(int c)
 /* ------------------------------------------------------------------ */
 
 /* __isascii / isascii: 7-bit ASCII range. */
-__declspec(dllexport) int __cdecl ucrt_xp_isascii(int c)
+UCRT_XP_API int __cdecl ucrt_xp_isascii(int c)
 {
     return ((unsigned)c & ~0x7f) == 0;
 }
 
 /* __toascii / toascii: clear high bits. */
-__declspec(dllexport) int __cdecl ucrt_xp_toascii(int c)
+UCRT_XP_API int __cdecl ucrt_xp_toascii(int c)
 {
     return c & 0x7f;
 }
 
 /* C99 isblank: space or tab only (not the full isspace set). */
-__declspec(dllexport) int __cdecl ucrt_xp_isblank(int c)
+UCRT_XP_API int __cdecl ucrt_xp_isblank(int c)
 {
     return c == ' ' || c == '\t';
 }
 
 /* __iscsymf / iscsymf: legal first character of a C identifier
  * (letter or underscore). */
-__declspec(dllexport) int __cdecl ucrt_xp_iscsymf(int c)
+UCRT_XP_API int __cdecl ucrt_xp_iscsymf(int c)
 {
     return ucrt_xp_isalpha(c) || c == '_';
 }
 
 /* __iscsym / iscsym: legal non-first character of a C identifier
  * (letter, digit, or underscore). */
-__declspec(dllexport) int __cdecl ucrt_xp_iscsym(int c)
+UCRT_XP_API int __cdecl ucrt_xp_iscsym(int c)
 {
     return ucrt_xp_isalnum(c) || c == '_';
 }
 
 /* Unchecked MSVC _tolower / _toupper (assume known case; still safe). */
-__declspec(dllexport) int __cdecl ucrt_xp__tolower(int c)
+UCRT_XP_API int __cdecl ucrt_xp__tolower(int c)
 {
     return (c >= 'A' && c <= 'Z') ? c + ('a' - 'A') : c;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp__toupper(int c)
+UCRT_XP_API int __cdecl ucrt_xp__toupper(int c)
 {
     return (c >= 'a' && c <= 'z') ? c - ('a' - 'A') : c;
 }
@@ -163,21 +163,21 @@ static int isw_classify_mask(wint_t c, unsigned char mask)
     }
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_iswalpha(wint_t c)  { return isw_classify_mask(c, 1); }
-__declspec(dllexport) int __cdecl ucrt_xp_iswdigit(wint_t c)  { return isw_classify_mask(c, 2); }
-__declspec(dllexport) int __cdecl ucrt_xp_iswalnum(wint_t c)  { return isw_classify_mask(c, 3); }
-__declspec(dllexport) int __cdecl ucrt_xp_iswspace(wint_t c)  { return isw_classify_mask(c, 4); }
-__declspec(dllexport) int __cdecl ucrt_xp_iswupper(wint_t c)  { return isw_classify_mask(c, 5); }
-__declspec(dllexport) int __cdecl ucrt_xp_iswlower(wint_t c)  { return isw_classify_mask(c, 6); }
-__declspec(dllexport) int __cdecl ucrt_xp_iswpunct(wint_t c)  { return isw_classify_mask(c, 7); }
-__declspec(dllexport) int __cdecl ucrt_xp_iswcntrl(wint_t c)  { return isw_classify_mask(c, 8); }
-__declspec(dllexport) int __cdecl ucrt_xp_iswxdigit(wint_t c) { return isw_classify_mask(c, 9); }
-__declspec(dllexport) int __cdecl ucrt_xp_iswprint(wint_t c)  { return isw_classify_mask(c, 10); }
-__declspec(dllexport) int __cdecl ucrt_xp_iswgraph(wint_t c)  { return isw_classify_mask(c, 11); }
-__declspec(dllexport) int __cdecl ucrt_xp_iswblank(wint_t c)  { return isw_classify_mask(c, 12); }
-__declspec(dllexport) int __cdecl ucrt_xp_iswascii(wint_t c)  { return c <= 0x7f; }
+UCRT_XP_API int __cdecl ucrt_xp_iswalpha(wint_t c)  { return isw_classify_mask(c, 1); }
+UCRT_XP_API int __cdecl ucrt_xp_iswdigit(wint_t c)  { return isw_classify_mask(c, 2); }
+UCRT_XP_API int __cdecl ucrt_xp_iswalnum(wint_t c)  { return isw_classify_mask(c, 3); }
+UCRT_XP_API int __cdecl ucrt_xp_iswspace(wint_t c)  { return isw_classify_mask(c, 4); }
+UCRT_XP_API int __cdecl ucrt_xp_iswupper(wint_t c)  { return isw_classify_mask(c, 5); }
+UCRT_XP_API int __cdecl ucrt_xp_iswlower(wint_t c)  { return isw_classify_mask(c, 6); }
+UCRT_XP_API int __cdecl ucrt_xp_iswpunct(wint_t c)  { return isw_classify_mask(c, 7); }
+UCRT_XP_API int __cdecl ucrt_xp_iswcntrl(wint_t c)  { return isw_classify_mask(c, 8); }
+UCRT_XP_API int __cdecl ucrt_xp_iswxdigit(wint_t c) { return isw_classify_mask(c, 9); }
+UCRT_XP_API int __cdecl ucrt_xp_iswprint(wint_t c)  { return isw_classify_mask(c, 10); }
+UCRT_XP_API int __cdecl ucrt_xp_iswgraph(wint_t c)  { return isw_classify_mask(c, 11); }
+UCRT_XP_API int __cdecl ucrt_xp_iswblank(wint_t c)  { return isw_classify_mask(c, 12); }
+UCRT_XP_API int __cdecl ucrt_xp_iswascii(wint_t c)  { return c <= 0x7f; }
 
-__declspec(dllexport) wint_t __cdecl ucrt_xp_towupper(wint_t c)
+UCRT_XP_API wint_t __cdecl ucrt_xp_towupper(wint_t c)
 {
     if (c <= 255) return (wint_t)ucrt_xp_toupper((int)c);
     {
@@ -187,7 +187,7 @@ __declspec(dllexport) wint_t __cdecl ucrt_xp_towupper(wint_t c)
     }
 }
 
-__declspec(dllexport) wint_t __cdecl ucrt_xp_towlower(wint_t c)
+UCRT_XP_API wint_t __cdecl ucrt_xp_towlower(wint_t c)
 {
     if (c <= 255) return (wint_t)ucrt_xp_tolower((int)c);
     {
@@ -197,12 +197,12 @@ __declspec(dllexport) wint_t __cdecl ucrt_xp_towlower(wint_t c)
     }
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_iswcsymf(wint_t c)
+UCRT_XP_API int __cdecl ucrt_xp_iswcsymf(wint_t c)
 {
     return ucrt_xp_iswalpha(c) || c == L'_';
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_iswcsym(wint_t c)
+UCRT_XP_API int __cdecl ucrt_xp_iswcsym(wint_t c)
 {
     return ucrt_xp_iswalnum(c) || c == L'_';
 }
@@ -227,7 +227,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_iswcsym(wint_t c)
 
 typedef unsigned short ucrt_xp_wctype_t;
 
-__declspec(dllexport) ucrt_xp_wctype_t __cdecl ucrt_xp_wctype(const char *property)
+UCRT_XP_API ucrt_xp_wctype_t __cdecl ucrt_xp_wctype(const char *property)
 {
     if (!property) return 0;
     if (ucrt_xp_strcmp(property, "alnum")  == 0) return UCRT_XP_WCT_ALNUM;
@@ -244,7 +244,7 @@ __declspec(dllexport) ucrt_xp_wctype_t __cdecl ucrt_xp_wctype(const char *proper
     return 0;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_iswctype(wint_t c, ucrt_xp_wctype_t desc)
+UCRT_XP_API int __cdecl ucrt_xp_iswctype(wint_t c, ucrt_xp_wctype_t desc)
 {
     unsigned short m = 0;
     if (ucrt_xp_iswalnum(c))  m |= UCRT_XP_WCT_ALNUM;

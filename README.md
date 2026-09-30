@@ -28,12 +28,17 @@ add_subdirectory(ucrt_xp)          # or link the prebuilt DLL
 
 # app.exe
 add_executable(app ...)
-target_compile_definitions(app PRIVATE UCRT_XP_BUILD_DLL)
-target_link_libraries(app ucrt_xp) # or ucrt_xp_static
+target_link_libraries(app ucrt_xp) # DLL: headers use dllimport automatically
+# or: target_link_libraries(app ucrt_xp_static)  # UCRT_XP_STATIC propagates via CMake
 ```
 
 Deploy `ucrt_xp.dll` next to the EXE (app-local). Static link is also
 supported via `ucrt_xp_static`.
+
+`UCRT_XP_API` (in `ucrt_xp.h`) selects the attribute: `UCRT_XP_BUILD_DLL`
+(DLL build only) → `dllexport`; `UCRT_XP_STATIC` → none; otherwise →
+`dllimport`. When linking the static library **without CMake**, define
+`UCRT_XP_STATIC` yourself. Do not define `UCRT_XP_BUILD_DLL` in applications.
 
 ## Coverage (high level)
 

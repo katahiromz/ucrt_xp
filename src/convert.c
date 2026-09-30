@@ -17,7 +17,7 @@
 /* String -> integer                                                   */
 /* ------------------------------------------------------------------ */
 
-__declspec(dllexport) long __cdecl ucrt_xp_strtol(const char *s, char **endptr, int base)
+UCRT_XP_API long __cdecl ucrt_xp_strtol(const char *s, char **endptr, int base)
 {
     const char *p = s;
     int neg = 0;
@@ -56,7 +56,7 @@ __declspec(dllexport) long __cdecl ucrt_xp_strtol(const char *s, char **endptr, 
     return neg ? -(long)acc : (long)acc;
 }
 
-__declspec(dllexport) unsigned long __cdecl ucrt_xp_strtoul(const char *s, char **endptr, int base)
+UCRT_XP_API unsigned long __cdecl ucrt_xp_strtoul(const char *s, char **endptr, int base)
 {
     /* Shares strtol's digit-scanning logic; sign handling for unsigned
      * conversion follows the standard's own (slightly odd) rule that a
@@ -95,12 +95,12 @@ __declspec(dllexport) unsigned long __cdecl ucrt_xp_strtoul(const char *s, char 
     return neg ? (unsigned long)(-(long)acc) : acc;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_atoi(const char *s)
+UCRT_XP_API int __cdecl ucrt_xp_atoi(const char *s)
 {
     return (int)ucrt_xp_strtol(s, NULL, 10);
 }
 
-__declspec(dllexport) long __cdecl ucrt_xp_atol(const char *s)
+UCRT_XP_API long __cdecl ucrt_xp_atol(const char *s)
 {
     return ucrt_xp_strtol(s, NULL, 10);
 }
@@ -116,7 +116,7 @@ __declspec(dllexport) long __cdecl ucrt_xp_atol(const char *s)
  * don't rely on it for numerically sensitive parsing of edge-case
  * values near a double's representable-precision boundary.
  */
-__declspec(dllexport) double __cdecl ucrt_xp_strtod(const char *s, char **endptr)
+UCRT_XP_API double __cdecl ucrt_xp_strtod(const char *s, char **endptr)
 {
     const char *p = s;
     int neg = 0;
@@ -170,7 +170,7 @@ __declspec(dllexport) double __cdecl ucrt_xp_strtod(const char *s, char **endptr
     return neg ? -result : result;
 }
 
-__declspec(dllexport) double __cdecl ucrt_xp_atof(const char *s)
+UCRT_XP_API double __cdecl ucrt_xp_atof(const char *s)
 {
     return ucrt_xp_strtod(s, NULL);
 }
@@ -179,8 +179,8 @@ __declspec(dllexport) double __cdecl ucrt_xp_atof(const char *s)
 /* abs/labs                                                             */
 /* ------------------------------------------------------------------ */
 
-__declspec(dllexport) int __cdecl ucrt_xp_abs(int v) { return v < 0 ? -v : v; }
-__declspec(dllexport) long __cdecl ucrt_xp_labs(long v) { return v < 0 ? -v : v; }
+UCRT_XP_API int __cdecl ucrt_xp_abs(int v) { return v < 0 ? -v : v; }
+UCRT_XP_API long __cdecl ucrt_xp_labs(long v) { return v < 0 ? -v : v; }
 
 /* ------------------------------------------------------------------ */
 /* rand/srand - always per-thread (see file header rationale)          */
@@ -217,13 +217,13 @@ static unsigned long *get_rand_state(void)
     return state;
 }
 
-__declspec(dllexport) void __cdecl ucrt_xp_srand(unsigned int seed)
+UCRT_XP_API void __cdecl ucrt_xp_srand(unsigned int seed)
 {
     unsigned long *state = get_rand_state();
     if (state) *state = seed;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_rand(void)
+UCRT_XP_API int __cdecl ucrt_xp_rand(void)
 {
     /* Classic linear congruential generator (same constants as the
      * historical Microsoft CRT rand()), so output ranges/behavior feel
@@ -295,14 +295,14 @@ static void quicksort(char *base, size_t n, size_t size, UCRT_XP_COMPARE_FN cmp)
     }
 }
 
-__declspec(dllexport) void __cdecl ucrt_xp_qsort(
+UCRT_XP_API void __cdecl ucrt_xp_qsort(
     void *base, size_t count, size_t size, UCRT_XP_COMPARE_FN cmp)
 {
     if (!base || !cmp || count == 0 || size == 0) return;
     quicksort((char *)base, count, size, cmp);
 }
 
-__declspec(dllexport) void* __cdecl ucrt_xp_bsearch(
+UCRT_XP_API void* __cdecl ucrt_xp_bsearch(
     const void *key, const void *base, size_t count, size_t size, UCRT_XP_COMPARE_FN cmp)
 {
     size_t lo = 0, hi = count;
@@ -347,21 +347,21 @@ static char *xtoa_unsigned(unsigned long value, char *str, int radix, int is_neg
     return str;
 }
 
-__declspec(dllexport) char* __cdecl ucrt_xp_itoa(int value, char *str, int radix)
+UCRT_XP_API char* __cdecl ucrt_xp_itoa(int value, char *str, int radix)
 {
     if (value < 0 && radix == 10)
         return xtoa_unsigned((unsigned long)(-(long)value), str, radix, 1);
     return xtoa_unsigned((unsigned long)(unsigned int)value, str, radix, 0);
 }
 
-__declspec(dllexport) char* __cdecl ucrt_xp_ltoa(long value, char *str, int radix)
+UCRT_XP_API char* __cdecl ucrt_xp_ltoa(long value, char *str, int radix)
 {
     if (value < 0 && radix == 10)
         return xtoa_unsigned((unsigned long)(-value), str, radix, 1);
     return xtoa_unsigned((unsigned long)value, str, radix, 0);
 }
 
-__declspec(dllexport) char* __cdecl ucrt_xp_ultoa(unsigned long value, char *str, int radix)
+UCRT_XP_API char* __cdecl ucrt_xp_ultoa(unsigned long value, char *str, int radix)
 {
     return xtoa_unsigned(value, str, radix, 0);
 }
@@ -370,7 +370,7 @@ __declspec(dllexport) char* __cdecl ucrt_xp_ultoa(unsigned long value, char *str
 /* 64-bit integer conversion, strtof, rand_s, searchenv, dupenv        */
 /* ------------------------------------------------------------------ */
 
-__declspec(dllexport) __int64 __cdecl ucrt_xp_strtoll(const char *s, char **endptr, int base)
+UCRT_XP_API __int64 __cdecl ucrt_xp_strtoll(const char *s, char **endptr, int base)
 {
     const char *p = s;
     int neg = 0;
@@ -405,7 +405,7 @@ __declspec(dllexport) __int64 __cdecl ucrt_xp_strtoll(const char *s, char **endp
     return neg ? -(__int64)acc : (__int64)acc;
 }
 
-__declspec(dllexport) unsigned __int64 __cdecl ucrt_xp_strtoull(const char *s, char **endptr, int base)
+UCRT_XP_API unsigned __int64 __cdecl ucrt_xp_strtoull(const char *s, char **endptr, int base)
 {
     const char *p = s;
     int neg = 0;
@@ -440,29 +440,29 @@ __declspec(dllexport) unsigned __int64 __cdecl ucrt_xp_strtoull(const char *s, c
     return neg ? (unsigned __int64)(-(__int64)acc) : acc;
 }
 
-__declspec(dllexport) __int64 __cdecl ucrt_xp_strtoi64(const char *s, char **endptr, int base)
+UCRT_XP_API __int64 __cdecl ucrt_xp_strtoi64(const char *s, char **endptr, int base)
 {
     return ucrt_xp_strtoll(s, endptr, base);
 }
 
-__declspec(dllexport) unsigned __int64 __cdecl ucrt_xp_strtoui64(const char *s, char **endptr, int base)
+UCRT_XP_API unsigned __int64 __cdecl ucrt_xp_strtoui64(const char *s, char **endptr, int base)
 {
     return ucrt_xp_strtoull(s, endptr, base);
 }
 
-__declspec(dllexport) float __cdecl ucrt_xp_strtof(const char *s, char **endptr)
+UCRT_XP_API float __cdecl ucrt_xp_strtof(const char *s, char **endptr)
 {
     return (float)ucrt_xp_strtod(s, endptr);
 }
 
 /* long double on MSVC x86 is 80-bit but often treated as double in
  * software paths; map to double for XP portability. */
-__declspec(dllexport) double __cdecl ucrt_xp_strtold(const char *s, char **endptr)
+UCRT_XP_API double __cdecl ucrt_xp_strtold(const char *s, char **endptr)
 {
     return ucrt_xp_strtod(s, endptr);
 }
 
-__declspec(dllexport) double __cdecl ucrt_xp_wtof(const wchar_t *s)
+UCRT_XP_API double __cdecl ucrt_xp_wtof(const wchar_t *s)
 {
     char buf[512];
     if (!s) return 0.0;
@@ -483,7 +483,7 @@ static BOOL __cdecl init_rtlgenrandom(void *param)
     return TRUE;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_rand_s(unsigned int *randomValue)
+UCRT_XP_API int __cdecl ucrt_xp_rand_s(unsigned int *randomValue)
 {
     static RtlGenRandom_fn pRtlGenRandom = NULL;
     static UCRT_XP_ONCE once = UCRT_XP_ONCE_INIT;
@@ -506,7 +506,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_rand_s(unsigned int *randomValue)
 
 /* _searchenv: look for filename in PATH (and optionally other env vars).
  * Writes full path into pathname (assumed large enough, classic CRT). */
-__declspec(dllexport) void __cdecl ucrt_xp_searchenv(const char *filename, const char *varname, char *pathname)
+UCRT_XP_API void __cdecl ucrt_xp_searchenv(const char *filename, const char *varname, char *pathname)
 {
     char envbuf[32768];
     DWORD n;
@@ -550,7 +550,7 @@ __declspec(dllexport) void __cdecl ucrt_xp_searchenv(const char *filename, const
 }
 
 /* _dupenv_s: allocate a copy of the environment variable value. */
-__declspec(dllexport) int __cdecl ucrt_xp_dupenv_s(char **buffer, size_t *numberOfElements, const char *varname)
+UCRT_XP_API int __cdecl ucrt_xp_dupenv_s(char **buffer, size_t *numberOfElements, const char *varname)
 {
     char *val;
     size_t len;
@@ -577,12 +577,12 @@ __declspec(dllexport) int __cdecl ucrt_xp_dupenv_s(char **buffer, size_t *number
 /* atoll / _atoi64 / _i64toa / _ui64toa / div / ldiv / llabs           */
 /* ------------------------------------------------------------------ */
 
-__declspec(dllexport) __int64 __cdecl ucrt_xp_atoll(const char *s)
+UCRT_XP_API __int64 __cdecl ucrt_xp_atoll(const char *s)
 {
     return ucrt_xp_strtoll(s, NULL, 10);
 }
 
-__declspec(dllexport) __int64 __cdecl ucrt_xp_atoi64(const char *s)
+UCRT_XP_API __int64 __cdecl ucrt_xp_atoi64(const char *s)
 {
     return ucrt_xp_strtoll(s, NULL, 10);
 }
@@ -604,19 +604,19 @@ static char *i64toa_unsigned(unsigned __int64 value, char *str, int radix, int i
     return str;
 }
 
-__declspec(dllexport) char* __cdecl ucrt_xp_i64toa(__int64 value, char *str, int radix)
+UCRT_XP_API char* __cdecl ucrt_xp_i64toa(__int64 value, char *str, int radix)
 {
     if (value < 0 && radix == 10)
         return i64toa_unsigned((unsigned __int64)(-value), str, radix, 1);
     return i64toa_unsigned((unsigned __int64)value, str, radix, 0);
 }
 
-__declspec(dllexport) char* __cdecl ucrt_xp_ui64toa(unsigned __int64 value, char *str, int radix)
+UCRT_XP_API char* __cdecl ucrt_xp_ui64toa(unsigned __int64 value, char *str, int radix)
 {
     return i64toa_unsigned(value, str, radix, 0);
 }
 
-__declspec(dllexport) UCRT_XP_DIV_T __cdecl ucrt_xp_div(int numer, int denom)
+UCRT_XP_API UCRT_XP_DIV_T __cdecl ucrt_xp_div(int numer, int denom)
 {
     UCRT_XP_DIV_T r;
     r.quot = (denom == 0) ? 0 : numer / denom;
@@ -624,7 +624,7 @@ __declspec(dllexport) UCRT_XP_DIV_T __cdecl ucrt_xp_div(int numer, int denom)
     return r;
 }
 
-__declspec(dllexport) UCRT_XP_LDIV_T __cdecl ucrt_xp_ldiv(long numer, long denom)
+UCRT_XP_API UCRT_XP_LDIV_T __cdecl ucrt_xp_ldiv(long numer, long denom)
 {
     UCRT_XP_LDIV_T r;
     r.quot = (denom == 0) ? 0 : numer / denom;
@@ -632,7 +632,7 @@ __declspec(dllexport) UCRT_XP_LDIV_T __cdecl ucrt_xp_ldiv(long numer, long denom
     return r;
 }
 
-__declspec(dllexport) __int64 __cdecl ucrt_xp_llabs(__int64 v)
+UCRT_XP_API __int64 __cdecl ucrt_xp_llabs(__int64 v)
 {
     return v < 0 ? -v : v;
 }
@@ -641,7 +641,7 @@ __declspec(dllexport) __int64 __cdecl ucrt_xp_llabs(__int64 v)
 /* Multibyte / wide conversion (CP_ACP)                                */
 /* ------------------------------------------------------------------ */
 
-__declspec(dllexport) int __cdecl ucrt_xp_mblen(const char *s, size_t n)
+UCRT_XP_API int __cdecl ucrt_xp_mblen(const char *s, size_t n)
 {
     if (!s || n == 0) return 0;
     if (*s == 0) return 0;
@@ -651,7 +651,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_mblen(const char *s, size_t n)
     return 1;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_mbtowc(wchar_t *pwc, const char *s, size_t n)
+UCRT_XP_API int __cdecl ucrt_xp_mbtowc(wchar_t *pwc, const char *s, size_t n)
 {
     int len;
     wchar_t w;
@@ -664,7 +664,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_mbtowc(wchar_t *pwc, const char *s, si
     return len;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_wctomb(char *s, wchar_t wc)
+UCRT_XP_API int __cdecl ucrt_xp_wctomb(char *s, wchar_t wc)
 {
     char buf[4];
     int n = WideCharToMultiByte(CP_ACP, 0, &wc, 1, buf, 4, NULL, NULL);
@@ -673,7 +673,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_wctomb(char *s, wchar_t wc)
     return n;
 }
 
-__declspec(dllexport) size_t __cdecl ucrt_xp_mbstowcs(wchar_t *wcstr, const char *mbstr, size_t count)
+UCRT_XP_API size_t __cdecl ucrt_xp_mbstowcs(wchar_t *wcstr, const char *mbstr, size_t count)
 {
     int n;
     if (!mbstr) return (size_t)-1;
@@ -686,7 +686,7 @@ __declspec(dllexport) size_t __cdecl ucrt_xp_mbstowcs(wchar_t *wcstr, const char
     return (size_t)(n - 1);
 }
 
-__declspec(dllexport) size_t __cdecl ucrt_xp_wcstombs(char *mbstr, const wchar_t *wcstr, size_t count)
+UCRT_XP_API size_t __cdecl ucrt_xp_wcstombs(char *mbstr, const wchar_t *wcstr, size_t count)
 {
     int n;
     if (!wcstr) return (size_t)-1;

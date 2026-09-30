@@ -67,7 +67,7 @@ static LCID resolve_lcid_by_name(const char *name)
     return 0; /* not found */
 }
 
-__declspec(dllexport) ucrt_xp_locale_t __cdecl ucrt_xp_locale_create(const char *name)
+UCRT_XP_API ucrt_xp_locale_t __cdecl ucrt_xp_locale_create(const char *name)
 {
     struct UCRT_XP_LOCALE *loc = (struct UCRT_XP_LOCALE *)
         ucrt_xp_malloc(sizeof(struct UCRT_XP_LOCALE));
@@ -113,13 +113,13 @@ __declspec(dllexport) ucrt_xp_locale_t __cdecl ucrt_xp_locale_create(const char 
     return (ucrt_xp_locale_t)loc;
 }
 
-__declspec(dllexport) ucrt_xp_locale_t __cdecl ucrt_xp_locale_addref(ucrt_xp_locale_t loc)
+UCRT_XP_API ucrt_xp_locale_t __cdecl ucrt_xp_locale_addref(ucrt_xp_locale_t loc)
 {
     if (loc) InterlockedIncrement(&loc->refcount);
     return loc;
 }
 
-__declspec(dllexport) void __cdecl ucrt_xp_locale_release(ucrt_xp_locale_t loc)
+UCRT_XP_API void __cdecl ucrt_xp_locale_release(ucrt_xp_locale_t loc)
 {
     if (!loc) return;
     if (InterlockedDecrement(&loc->refcount) == 0) {
@@ -140,7 +140,7 @@ const char *ucrt_xp__locale_name(ucrt_xp_locale_t loc)
 }
 
 
-__declspec(dllexport) ucrt_xp_locale_t __cdecl ucrt_xp_locale_get_thread(void)
+UCRT_XP_API ucrt_xp_locale_t __cdecl ucrt_xp_locale_get_thread(void)
 {
     ucrt_xp_locale_t loc;
     ucrt_xp_once(&g_locale_tls_once, init_locale_tls, NULL);
@@ -155,7 +155,7 @@ __declspec(dllexport) ucrt_xp_locale_t __cdecl ucrt_xp_locale_get_thread(void)
     return loc;
 }
 
-__declspec(dllexport) void __cdecl ucrt_xp_locale_set_thread(ucrt_xp_locale_t loc)
+UCRT_XP_API void __cdecl ucrt_xp_locale_set_thread(ucrt_xp_locale_t loc)
 {
     ucrt_xp_locale_t old;
     ucrt_xp_once(&g_locale_tls_once, init_locale_tls, NULL);
@@ -166,7 +166,7 @@ __declspec(dllexport) void __cdecl ucrt_xp_locale_set_thread(ucrt_xp_locale_t lo
     if (old) ucrt_xp_locale_release(old);
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_stricmp_l(
+UCRT_XP_API int __cdecl ucrt_xp_stricmp_l(
     const char *a, const char *b, ucrt_xp_locale_t loc)
 {
     ucrt_xp_locale_t use_loc = loc ? loc : ucrt_xp_locale_get_thread();
@@ -179,13 +179,13 @@ __declspec(dllexport) int __cdecl ucrt_xp_stricmp_l(
 
 /* Non-locale variant: uses the calling thread's current locale
  * (same semantics as MSVC's _stricmp). */
-__declspec(dllexport) int __cdecl ucrt_xp_stricmp(
+UCRT_XP_API int __cdecl ucrt_xp_stricmp(
     const char *a, const char *b)
 {
     return ucrt_xp_stricmp_l(a, b, NULL);
 }
 
-__declspec(dllexport) BOOL __cdecl ucrt_xp_locale_get_lconv(
+UCRT_XP_API BOOL __cdecl ucrt_xp_locale_get_lconv(
     ucrt_xp_locale_t loc, UCRT_XP_LCONV *out)
 {
     ucrt_xp_locale_t use_loc = loc ? loc : ucrt_xp_locale_get_thread();
@@ -196,7 +196,7 @@ __declspec(dllexport) BOOL __cdecl ucrt_xp_locale_get_lconv(
     return TRUE;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_toupper_l(int c, ucrt_xp_locale_t loc)
+UCRT_XP_API int __cdecl ucrt_xp_toupper_l(int c, ucrt_xp_locale_t loc)
 {
     ucrt_xp_locale_t use_loc = loc ? loc : ucrt_xp_locale_get_thread();
     char ch = (char)c;
@@ -211,7 +211,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_toupper_l(int c, ucrt_xp_locale_t loc)
     return (unsigned char)buf[0];
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_tolower_l(int c, ucrt_xp_locale_t loc)
+UCRT_XP_API int __cdecl ucrt_xp_tolower_l(int c, ucrt_xp_locale_t loc)
 {
     ucrt_xp_locale_t use_loc = loc ? loc : ucrt_xp_locale_get_thread();
     char ch = (char)c;
@@ -230,7 +230,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_tolower_l(int c, ucrt_xp_locale_t loc)
 /* Locale-aware string comparison (C89 strcoll). Uses CompareStringA
  * without NORM_IGNORECASE so diacritics / code-page ordering match the
  * locale's SORTKEY rules. Returns <0 / 0 / >0 like strcmp. */
-__declspec(dllexport) int __cdecl ucrt_xp_strcoll_l(
+UCRT_XP_API int __cdecl ucrt_xp_strcoll_l(
     const char *a, const char *b, ucrt_xp_locale_t loc)
 {
     ucrt_xp_locale_t use_loc = loc ? loc : ucrt_xp_locale_get_thread();
@@ -245,7 +245,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_strcoll_l(
     return r - CSTR_EQUAL;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_strcoll(const char *a, const char *b)
+UCRT_XP_API int __cdecl ucrt_xp_strcoll(const char *a, const char *b)
 {
     return ucrt_xp_strcoll_l(a, b, NULL);
 }
@@ -256,7 +256,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_strcoll(const char *a, const char *b)
  * (including the terminating 0). Otherwise copies at most n bytes and
  * returns the length that would have been written (excluding the
  * terminating 0 when the result fitted, matching classic CRT). */
-__declspec(dllexport) size_t __cdecl ucrt_xp_strxfrm_l(
+UCRT_XP_API size_t __cdecl ucrt_xp_strxfrm_l(
     char *dest, const char *src, size_t n, ucrt_xp_locale_t loc)
 {
     ucrt_xp_locale_t use_loc = loc ? loc : ucrt_xp_locale_get_thread();
@@ -297,7 +297,7 @@ __declspec(dllexport) size_t __cdecl ucrt_xp_strxfrm_l(
     return (size_t)(needed - 1);
 }
 
-__declspec(dllexport) size_t __cdecl ucrt_xp_strxfrm(
+UCRT_XP_API size_t __cdecl ucrt_xp_strxfrm(
     char *dest, const char *src, size_t n)
 {
     return ucrt_xp_strxfrm_l(dest, src, n, NULL);
@@ -308,7 +308,7 @@ __declspec(dllexport) size_t __cdecl ucrt_xp_strxfrm(
 /* ------------------------------------------------------------------ */
 
 /* Locale-aware case-insensitive string comparison (MSVC _stricoll). */
-__declspec(dllexport) int __cdecl ucrt_xp_stricoll_l(
+UCRT_XP_API int __cdecl ucrt_xp_stricoll_l(
     const char *a, const char *b, ucrt_xp_locale_t loc)
 {
     ucrt_xp_locale_t use_loc = loc ? loc : ucrt_xp_locale_get_thread();
@@ -320,14 +320,14 @@ __declspec(dllexport) int __cdecl ucrt_xp_stricoll_l(
     return r - CSTR_EQUAL;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_stricoll(const char *a, const char *b)
+UCRT_XP_API int __cdecl ucrt_xp_stricoll(const char *a, const char *b)
 {
     return ucrt_xp_stricoll_l(a, b, NULL);
 }
 
 /* Case-insensitive locale collation of at most n characters
  * (MSVC _strnicoll). Stops at the first NUL in either string. */
-__declspec(dllexport) int __cdecl ucrt_xp_strnicoll_l(
+UCRT_XP_API int __cdecl ucrt_xp_strnicoll_l(
     const char *a, const char *b, size_t n, ucrt_xp_locale_t loc)
 {
     ucrt_xp_locale_t use_loc = loc ? loc : ucrt_xp_locale_get_thread();
@@ -348,7 +348,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_strnicoll_l(
     return r - CSTR_EQUAL;
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_strnicoll(
+UCRT_XP_API int __cdecl ucrt_xp_strnicoll(
     const char *a, const char *b, size_t n)
 {
     return ucrt_xp_strnicoll_l(a, b, n, NULL);
@@ -358,7 +358,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_strnicoll(
 /* Classic setlocale / localeconv (thin layer over locale objects)     */
 /* ------------------------------------------------------------------ */
 
-__declspec(dllexport) char* __cdecl ucrt_xp_setlocale(int category, const char *locale)
+UCRT_XP_API char* __cdecl ucrt_xp_setlocale(int category, const char *locale)
 {
     static char name_buf[64];
     ucrt_xp_locale_t loc;
@@ -379,7 +379,7 @@ __declspec(dllexport) char* __cdecl ucrt_xp_setlocale(int category, const char *
     return name_buf;
 }
 
-__declspec(dllexport) UCRT_XP_LCONV* __cdecl ucrt_xp_localeconv(void)
+UCRT_XP_API UCRT_XP_LCONV* __cdecl ucrt_xp_localeconv(void)
 {
     static UCRT_XP_LCONV cached;
     if (!ucrt_xp_locale_get_lconv(NULL, &cached)) {

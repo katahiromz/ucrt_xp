@@ -73,7 +73,7 @@ static ThreadCache *get_thread_cache(void)
     return tc;
 }
 
-__declspec(dllexport) BOOL __cdecl ucrt_xp_heap_init(void)
+UCRT_XP_API BOOL __cdecl ucrt_xp_heap_init(void)
 {
     if (g_ucrt_xp_heap) return TRUE;
 
@@ -97,7 +97,7 @@ __declspec(dllexport) BOOL __cdecl ucrt_xp_heap_init(void)
     return TRUE;
 }
 
-__declspec(dllexport) void* __cdecl ucrt_xp_malloc(size_t size)
+UCRT_XP_API void* __cdecl ucrt_xp_malloc(size_t size)
 {
     int slot;
     BlockHeader *hdr;
@@ -128,7 +128,7 @@ __declspec(dllexport) void* __cdecl ucrt_xp_malloc(size_t size)
     return (void *)(hdr + 1);
 }
 
-__declspec(dllexport) void* __cdecl ucrt_xp_calloc(size_t count, size_t size)
+UCRT_XP_API void* __cdecl ucrt_xp_calloc(size_t count, size_t size)
 {
     size_t total;
     void *p;
@@ -143,7 +143,7 @@ __declspec(dllexport) void* __cdecl ucrt_xp_calloc(size_t count, size_t size)
     return p;
 }
 
-__declspec(dllexport) void* __cdecl ucrt_xp_realloc(void *ptr, size_t size)
+UCRT_XP_API void* __cdecl ucrt_xp_realloc(void *ptr, size_t size)
 {
     BlockHeader *hdr;
     void *newp;
@@ -188,7 +188,7 @@ void ucrt_xp_heap_thread_cleanup(void)
     TlsSetValue(g_tls_index, NULL);
 }
 
-__declspec(dllexport) void __cdecl ucrt_xp_free(void *ptr)
+UCRT_XP_API void __cdecl ucrt_xp_free(void *ptr)
 {
     BlockHeader *hdr;
     if (!ptr) return;

@@ -19,7 +19,7 @@
 #define ONCE_RUNNING      1
 #define ONCE_DONE         2
 
-__declspec(dllexport) BOOL __cdecl ucrt_xp_once(
+UCRT_XP_API BOOL __cdecl ucrt_xp_once(
     UCRT_XP_ONCE *once, UCRT_XP_ONCE_FN fn, void *param)
 {
     if (!once || !fn) {

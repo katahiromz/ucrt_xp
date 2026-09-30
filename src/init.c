@@ -61,7 +61,7 @@ static void ucrt_xp_fatal_abi_mismatch(DWORD expected, DWORD actual)
     TerminateProcess(GetCurrentProcess(), (UINT)0xC0000409 /* STATUS_STACK_BUFFER_OVERRUN-ish sentinel */);
 }
 
-__declspec(dllexport) BOOL __cdecl ucrt_xp_init(DWORD expected_abi_version)
+UCRT_XP_API BOOL __cdecl ucrt_xp_init(DWORD expected_abi_version)
 {
     /* Only the MAJOR component must match exactly; a DLL with an equal
      * or higher MINOR is backward compatible by construction (additive
@@ -83,7 +83,7 @@ __declspec(dllexport) BOOL __cdecl ucrt_xp_init(DWORD expected_abi_version)
     return TRUE;
 }
 
-__declspec(dllexport) BOOL __cdecl ucrt_xp_get_version(UCRT_XP_VERSION_INFO *info)
+UCRT_XP_API BOOL __cdecl ucrt_xp_get_version(UCRT_XP_VERSION_INFO *info)
 {
     if (!info || info->cb < sizeof(UCRT_XP_VERSION_INFO)) {
         return FALSE;

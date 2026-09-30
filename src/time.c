@@ -21,7 +21,7 @@
  * in 100-nanosecond units - the standard constant for this conversion. */
 #define UCRT_XP_EPOCH_DIFF_100NS 116444736000000000LL
 
-__declspec(dllexport) __int64 __cdecl ucrt_xp_time(__int64 *out)
+UCRT_XP_API __int64 __cdecl ucrt_xp_time(__int64 *out)
 {
     FILETIME ft;
     ULARGE_INTEGER uli;
@@ -36,7 +36,7 @@ __declspec(dllexport) __int64 __cdecl ucrt_xp_time(__int64 *out)
     return t;
 }
 
-__declspec(dllexport) unsigned long __cdecl ucrt_xp_clock(void)
+UCRT_XP_API unsigned long __cdecl ucrt_xp_clock(void)
 {
     /* GetTickCount() wraps at ~49.7 days, same practical caveat as the
      * classic CRT clock()'s own documented wraparound behavior - not a
@@ -69,7 +69,7 @@ static int is_leap_year(int year)
     return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
 }
 
-__declspec(dllexport) int __cdecl ucrt_xp_compute_yday(int year, int mon0, int mday)
+UCRT_XP_API int __cdecl ucrt_xp_compute_yday(int year, int mon0, int mday)
 {
     static const int cum_days[12] = {0,31,59,90,120,151,181,212,243,273,304,334};
     int yday = cum_days[mon0] + (mday - 1);
@@ -77,7 +77,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_compute_yday(int year, int mon0, int m
     return yday;
 }
 
-__declspec(dllexport) BOOL __cdecl ucrt_xp_gmtime(const __int64 *timer, UCRT_XP_TM *out)
+UCRT_XP_API BOOL __cdecl ucrt_xp_gmtime(const __int64 *timer, UCRT_XP_TM *out)
 {
     FILETIME ft;
     SYSTEMTIME st;
@@ -98,7 +98,7 @@ __declspec(dllexport) BOOL __cdecl ucrt_xp_gmtime(const __int64 *timer, UCRT_XP_
     return TRUE;
 }
 
-__declspec(dllexport) BOOL __cdecl ucrt_xp_localtime(const __int64 *timer, UCRT_XP_TM *out)
+UCRT_XP_API BOOL __cdecl ucrt_xp_localtime(const __int64 *timer, UCRT_XP_TM *out)
 {
     FILETIME ft, local_ft;
     SYSTEMTIME st_utc, st_local;
@@ -164,7 +164,7 @@ static int week_num_W(const UCRT_XP_TM *tm)
  * ucrt_xp_strftime - practical C-locale subset: numeric fields, English
  * day/month names, %c/%x/%X composites, and %U/%W week numbers.
  */
-__declspec(dllexport) size_t __cdecl ucrt_xp_strftime(
+UCRT_XP_API size_t __cdecl ucrt_xp_strftime(
     char *buf, size_t bufsize, const char *fmt, const UCRT_XP_TM *tm)
 {
     char work[128];
@@ -279,7 +279,7 @@ __declspec(dllexport) size_t __cdecl ucrt_xp_strftime(
 
 /* Non-reentrant static buffers, matching classic CRT (thread-unsafe by
  * design of the original API). Prefer strftime + localtime for new code. */
-__declspec(dllexport) char* __cdecl ucrt_xp_asctime(const UCRT_XP_TM *tm)
+UCRT_XP_API char* __cdecl ucrt_xp_asctime(const UCRT_XP_TM *tm)
 {
     static char buf[32];
     static const char *wday[7] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
@@ -297,7 +297,7 @@ __declspec(dllexport) char* __cdecl ucrt_xp_asctime(const UCRT_XP_TM *tm)
     return buf;
 }
 
-__declspec(dllexport) char* __cdecl ucrt_xp_ctime(const UCRT_XP_TIME_T *timer)
+UCRT_XP_API char* __cdecl ucrt_xp_ctime(const UCRT_XP_TIME_T *timer)
 {
     UCRT_XP_TM tm;
     if (!timer) return NULL;
@@ -305,7 +305,7 @@ __declspec(dllexport) char* __cdecl ucrt_xp_ctime(const UCRT_XP_TIME_T *timer)
     return ucrt_xp_asctime(&tm);
 }
 
-__declspec(dllexport) char* __cdecl ucrt_xp_strdate(char *buf)
+UCRT_XP_API char* __cdecl ucrt_xp_strdate(char *buf)
 {
     SYSTEMTIME st;
     if (!buf) return NULL;
@@ -315,7 +315,7 @@ __declspec(dllexport) char* __cdecl ucrt_xp_strdate(char *buf)
     return buf;
 }
 
-__declspec(dllexport) char* __cdecl ucrt_xp_strtime(char *buf)
+UCRT_XP_API char* __cdecl ucrt_xp_strtime(char *buf)
 {
     SYSTEMTIME st;
     if (!buf) return NULL;

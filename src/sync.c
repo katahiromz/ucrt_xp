@@ -132,7 +132,7 @@ void ucrt_xp__sync_cleanup(void)
     InterlockedExchange(&g_state, 0);
 }
 
-__declspec(dllexport) BOOL __cdecl ucrt_xp_sync_is_native(void)
+UCRT_XP_API BOOL __cdecl ucrt_xp_sync_is_native(void)
 {
     sync_ensure();
     return use_native() ? TRUE : FALSE;
@@ -290,7 +290,7 @@ static BOOL wait_core(Waiter **head, CRITICAL_SECTION *cs, DWORD ms)
 /* Condition variable (public)                                          */
 /* ------------------------------------------------------------------ */
 
-__declspec(dllexport) void __cdecl ucrt_xp_InitializeConditionVariable(
+UCRT_XP_API void __cdecl ucrt_xp_InitializeConditionVariable(
     UCRT_XP_CONDITION_VARIABLE *cv)
 {
     if (!cv) return;
@@ -302,7 +302,7 @@ __declspec(dllexport) void __cdecl ucrt_xp_InitializeConditionVariable(
     }
 }
 
-__declspec(dllexport) BOOL __cdecl ucrt_xp_SleepConditionVariableCS(
+UCRT_XP_API BOOL __cdecl ucrt_xp_SleepConditionVariableCS(
     UCRT_XP_CONDITION_VARIABLE *cv, CRITICAL_SECTION *cs, DWORD timeout_ms)
 {
     if (!cv || !cs) {
@@ -316,7 +316,7 @@ __declspec(dllexport) BOOL __cdecl ucrt_xp_SleepConditionVariableCS(
     return wait_core((Waiter **)&cv->Ptr, cs, timeout_ms);
 }
 
-__declspec(dllexport) void __cdecl ucrt_xp_WakeConditionVariable(
+UCRT_XP_API void __cdecl ucrt_xp_WakeConditionVariable(
     UCRT_XP_CONDITION_VARIABLE *cv)
 {
     if (!cv) return;
@@ -333,7 +333,7 @@ __declspec(dllexport) void __cdecl ucrt_xp_WakeConditionVariable(
     LeaveCriticalSection(&g_lock);
 }
 
-__declspec(dllexport) void __cdecl ucrt_xp_WakeAllConditionVariable(
+UCRT_XP_API void __cdecl ucrt_xp_WakeAllConditionVariable(
     UCRT_XP_CONDITION_VARIABLE *cv)
 {
     if (!cv) return;
@@ -365,14 +365,14 @@ __declspec(dllexport) void __cdecl ucrt_xp_WakeAllConditionVariable(
 
 static Waiter *g_once_waiters = NULL; /* one queue shared by all fallback onces */
 
-__declspec(dllexport) void __cdecl ucrt_xp_InitOnceInitialize(UCRT_XP_INIT_ONCE *once)
+UCRT_XP_API void __cdecl ucrt_xp_InitOnceInitialize(UCRT_XP_INIT_ONCE *once)
 {
     if (once) {
         once->Ptr = NULL;
     }
 }
 
-__declspec(dllexport) BOOL __cdecl ucrt_xp_InitOnceExecuteOnce(
+UCRT_XP_API BOOL __cdecl ucrt_xp_InitOnceExecuteOnce(
     UCRT_XP_INIT_ONCE *once, UCRT_XP_INIT_ONCE_FN fn, PVOID param, PVOID *context)
 {
     ULONG_PTR v;

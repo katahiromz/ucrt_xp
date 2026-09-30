@@ -20,7 +20,7 @@
 
 static UCRT_XP_UNHANDLED_FN g_unhandled_fn = NULL;
 
-__declspec(dllexport) void __cdecl ucrt_xp_set_unhandled_handler(UCRT_XP_UNHANDLED_FN fn)
+UCRT_XP_API void __cdecl ucrt_xp_set_unhandled_handler(UCRT_XP_UNHANDLED_FN fn)
 {
     g_unhandled_fn = fn;
 }
@@ -89,7 +89,7 @@ static TranslatorSlot *get_translator_slot(BOOL create)
     return slot;
 }
 
-__declspec(dllexport) UCRT_XP_SE_TRANSLATOR_FN __cdecl ucrt_xp_set_se_translator(
+UCRT_XP_API UCRT_XP_SE_TRANSLATOR_FN __cdecl ucrt_xp_set_se_translator(
     UCRT_XP_SE_TRANSLATOR_FN fn, void *user_context)
 {
     UCRT_XP_SE_TRANSLATOR_FN old = NULL;
@@ -130,7 +130,7 @@ static void invoke_translator_if_any(UCRT_XP_EXCEPTION_INFO *info)
 
 #if defined(_MSC_VER)
 
-__declspec(dllexport) BOOL __cdecl ucrt_xp_guarded_call(
+UCRT_XP_API BOOL __cdecl ucrt_xp_guarded_call(
     UCRT_XP_GUARDED_FN fn, void *param, int *result,
     UCRT_XP_EXCEPTION_INFO *out_info)
 {
@@ -198,7 +198,7 @@ static BOOL __cdecl install_guard_handler(void *param)
     return g_guard_handle != NULL;
 }
 
-__declspec(dllexport) BOOL __cdecl ucrt_xp_guarded_call(
+UCRT_XP_API BOOL __cdecl ucrt_xp_guarded_call(
     UCRT_XP_GUARDED_FN fn, void *param, int *result,
     UCRT_XP_EXCEPTION_INFO *out_info)
 {
@@ -228,7 +228,7 @@ __declspec(dllexport) BOOL __cdecl ucrt_xp_guarded_call(
 
 #endif /* _MSC_VER */
 
-__declspec(dllexport) LONG __cdecl ucrt_xp_seh_filter(EXCEPTION_POINTERS *ep)
+UCRT_XP_API LONG __cdecl ucrt_xp_seh_filter(EXCEPTION_POINTERS *ep)
 {
     char buf[512];
     DWORD code;
