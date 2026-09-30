@@ -961,3 +961,181 @@ __declspec(dllexport) int __cdecl ucrt_xp_wscanf(const wchar_t *fmt, ...)
     va_end(args);
     return r;
 }
+
+/* ------------------------------------------------------------------ */
+/* Additional wcs* / wmem* primitives (search, span, tokenize, dup)    */
+/* ------------------------------------------------------------------ */
+
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcschr(const wchar_t *s, wchar_t c)
+{
+    if (!s) return NULL;
+    for (; *s; s++) {
+        if (*s == c) return (wchar_t *)s;
+    }
+    return (c == 0) ? (wchar_t *)s : NULL; /* wcschr(s, L'\0') finds the NUL */
+}
+
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcsrchr(const wchar_t *s, wchar_t c)
+{
+    const wchar_t *found = NULL;
+    if (!s) return NULL;
+    for (; *s; s++) {
+        if (*s == c) found = s;
+    }
+    if (c == 0) return (wchar_t *)s;
+    return (wchar_t *)found;
+}
+
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcsstr(
+    const wchar_t *haystack, const wchar_t *needle)
+{
+    size_t nlen;
+    if (!haystack || !needle) return NULL;
+    nlen = ucrt_xp_wcslen(needle);
+    if (nlen == 0) return (wchar_t *)haystack;
+
+    for (; *haystack; haystack++) {
+        if (ucrt_xp_wcsncmp(haystack, needle, nlen) == 0) return (wchar_t *)haystack;
+    }
+    return NULL;
+}
+
+__declspec(dllexport) size_t __cdecl ucrt_xp_wcsspn(const wchar_t *s, const wchar_t *accept)
+{
+    const wchar_t *p = s;
+    if (!s || !accept) return 0;
+    for (; *p; p++) {
+        if (!ucrt_xp_wcschr(accept, *p)) break;
+    }
+    return (size_t)(p - s);
+}
+
+__declspec(dllexport) size_t __cdecl ucrt_xp_wcscspn(const wchar_t *s, const wchar_t *reject)
+{
+    const wchar_t *p = s;
+    if (!s) return 0;
+    if (!reject) return ucrt_xp_wcslen(s);
+    for (; *p; p++) {
+        if (ucrt_xp_wcschr(reject, *p)) break;
+    }
+    return (size_t)(p - s);
+}
+
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcspbrk(const wchar_t *s, const wchar_t *accept)
+{
+    if (!s || !accept) return NULL;
+    for (; *s; s++) {
+        if (ucrt_xp_wcschr(accept, *s)) return (wchar_t *)s;
+    }
+    return NULL;
+}
+
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcsncat(
+    wchar_t *dst, const wchar_t *src, size_t n)
+{
+    wchar_t *d;
+    size_t i = 0;
+    if (!dst) return dst;
+    d = dst + ucrt_xp_wcslen(dst);
+    if (src) {
+        for (; i < n && src[i]; i++) d[i] = src[i];
+    }
+    d[i] = 0; /* always terminated, like strncat */
+    return dst;
+}
+
+/* Case-insensitive compare of at most n characters (MSVC _wcsnicmp). */
+__declspec(dllexport) int __cdecl ucrt_xp_wcsnicmp(
+    const wchar_t *a, const wchar_t *b, size_t n)
+{
+    size_t la, lb;
+    int r;
+
+    if (n == 0) return 0;
+    if (!a || !b) return (a == b) ? 0 : (a ? 1 : -1);
+
+    la = ucrt_xp_wcsnlen(a, n);
+    lb = ucrt_xp_wcsnlen(b, n);
+    r = CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORECASE,
+                       a, (int)la, b, (int)lb);
+    return r - CSTR_EQUAL;
+}
+
+/* Result is allocated with ucrt_xp_malloc; release with ucrt_xp_free. */
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcsdup(const wchar_t *s)
+{
+    size_t len;
+    wchar_t *copy;
+    if (!s) return NULL;
+    len = ucrt_xp_wcslen(s) + 1;
+    copy = (wchar_t *)ucrt_xp_malloc(len * sizeof(wchar_t));
+    if (copy) CopyMemory(copy, s, len * sizeof(wchar_t));
+    return copy;
+}
+
+/* Reentrant wcstok with explicit saveptr (same design as strtok_r). */
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcstok_r(
+    wchar_t *str, const wchar_t *delim, wchar_t **saveptr)
+{
+    wchar_t *start;
+    wchar_t *p;
+
+    if (!saveptr || !delim) return NULL;
+    if (!str) {
+        str = *saveptr;
+        if (!str) return NULL;
+    }
+
+    for (; *str; str++) {
+        if (!ucrt_xp_wcschr(delim, *str)) break;
+    }
+    if (*str == 0) { *saveptr = str; return NULL; }
+
+    start = str;
+    for (p = str; *p; p++) {
+        if (ucrt_xp_wcschr(delim, *p)) {
+            *p = 0;
+            *saveptr = p + 1;
+            return start;
+        }
+    }
+    *saveptr = p;
+    return start;
+}
+
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wmemcpy(wchar_t *dst, const wchar_t *src, size_t n)
+{
+    CopyMemory(dst, src, n * sizeof(wchar_t));
+    return dst;
+}
+
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wmemmove(wchar_t *dst, const wchar_t *src, size_t n)
+{
+    MoveMemory(dst, src, n * sizeof(wchar_t));
+    return dst;
+}
+
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wmemset(wchar_t *dst, wchar_t c, size_t n)
+{
+    size_t i;
+    for (i = 0; i < n; i++) dst[i] = c;
+    return dst;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_wmemcmp(const wchar_t *a, const wchar_t *b, size_t n)
+{
+    size_t i;
+    for (i = 0; i < n; i++) {
+        if (a[i] != b[i]) return (int)a[i] - (int)b[i];
+    }
+    return 0;
+}
+
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wmemchr(const wchar_t *buf, wchar_t c, size_t n)
+{
+    size_t i;
+    for (i = 0; i < n; i++) {
+        if (buf[i] == c) return (wchar_t *)(buf + i);
+    }
+    return NULL;
+}

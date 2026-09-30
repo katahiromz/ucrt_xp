@@ -199,3 +199,23 @@ EXPORTS
     ucrt_xp_WakeAllConditionVariable     @232
     ucrt_xp_InitOnceInitialize           @233
     ucrt_xp_InitOnceExecuteOnce          @234
+
+    ucrt_xp_strspn                         @235
+    ucrt_xp_strcspn                        @236
+    ucrt_xp_strpbrk                        @237
+    ucrt_xp_strnlen                        @238
+    ucrt_xp_wcschr                         @239
+    ucrt_xp_wcsrchr                        @240
+    ucrt_xp_wcsstr                         @241
+    ucrt_xp_wcsspn                         @242
+    ucrt_xp_wcscspn                        @243
+    ucrt_xp_wcspbrk                        @244
+    ucrt_xp_wcsncat                        @245
+    ucrt_xp_wcsnicmp                       @246
+    ucrt_xp_wcsdup                         @247
+    ucrt_xp_wcstok_r                       @248
+    ucrt_xp_wmemcpy                        @249
+    ucrt_xp_wmemmove                       @250
+    ucrt_xp_wmemset                        @251
+    ucrt_xp_wmemcmp                        @252
+    ucrt_xp_wmemchr                        @253

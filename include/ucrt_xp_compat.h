@@ -170,6 +170,10 @@
 #define strchr(s, c)              ucrt_xp_strchr(s, c)
 #define strrchr(s, c)             ucrt_xp_strrchr(s, c)
 #define strstr(h, n)              ucrt_xp_strstr(h, n)
+#define strspn(s, a)              ucrt_xp_strspn(s, a)
+#define strcspn(s, r)             ucrt_xp_strcspn(s, r)
+#define strpbrk(s, a)             ucrt_xp_strpbrk(s, a)
+#define strnlen(s, n)             ucrt_xp_strnlen(s, n)
 #define strerror(e)               ucrt_xp_strerror(e)
 /* Reentrant form only - classic strtok() with hidden static state is
  * intentionally not provided. Callers should use strtok_r. */
@@ -224,6 +228,21 @@
 #define wcscpy(dst, src)          ucrt_xp_wcscpy(dst, src)
 #define wcsncpy(dst, src, n)      ucrt_xp_wcsncpy(dst, src, n)
 #define wcscat(dst, src)          ucrt_xp_wcscat(dst, src)
+#define wcsncat(dst, src, n)      ucrt_xp_wcsncat(dst, src, n)
+#define wcschr(s, c)              ucrt_xp_wcschr(s, c)
+#define wcsrchr(s, c)             ucrt_xp_wcsrchr(s, c)
+#define wcsstr(h, n)              ucrt_xp_wcsstr(h, n)
+#define wcsspn(s, a)              ucrt_xp_wcsspn(s, a)
+#define wcscspn(s, r)             ucrt_xp_wcscspn(s, r)
+#define wcspbrk(s, a)             ucrt_xp_wcspbrk(s, a)
+#define _wcsnicmp(a, b, n)        ucrt_xp_wcsnicmp(a, b, n)
+#define _wcsdup(s)                ucrt_xp_wcsdup(s)
+#define wcstok_s(s, d, sp)        ucrt_xp_wcstok_r(s, d, sp)
+#define wmemcpy(d, s, n)          ucrt_xp_wmemcpy(d, s, n)
+#define wmemmove(d, s, n)         ucrt_xp_wmemmove(d, s, n)
+#define wmemset(d, c, n)          ucrt_xp_wmemset(d, c, n)
+#define wmemcmp(a, b, n)          ucrt_xp_wmemcmp(a, b, n)
+#define wmemchr(s, c, n)          ucrt_xp_wmemchr(s, c, n)
 #define swprintf                  ucrt_xp_swprintf
 #define vswprintf                 ucrt_xp_vswprintf
 #define fwprintf                  ucrt_xp_fwprintf

@@ -291,6 +291,75 @@ static void test_wide(void)
     printf("[OK] wcs*/wcsn*/wcsicmp + ansi<->wide conversion + wfopen (_wfopen)\n");
 }
 
+static void test_span_search(void)
+{
+    wchar_t wbuf[32], *save = NULL, *tok;
+    wchar_t *dup;
+    char cbuf[32];
+
+    /* narrow: strspn / strcspn / strpbrk / strnlen */
+    assert(ucrt_xp_strspn("aabbcc", "ab") == 4);
+    assert(ucrt_xp_strspn("xyz", "ab") == 0);
+    assert(ucrt_xp_strspn("", "ab") == 0);
+    assert(ucrt_xp_strcspn("hello, world", ", ") == 5);
+    assert(ucrt_xp_strcspn("abc", "xyz") == 3);
+    assert(ucrt_xp_strcspn("abc", "") == 3);
+    assert(ucrt_xp_strpbrk("hello", "lo") != NULL);
+    assert(*ucrt_xp_strpbrk("hello", "lo") == 'l');
+    assert(ucrt_xp_strpbrk("hello", "xyz") == NULL);
+    assert(ucrt_xp_strnlen("hello", 3) == 3);
+    assert(ucrt_xp_strnlen("hi", 10) == 2);
+
+    /* wide: wcsspn / wcscspn / wcspbrk */
+    assert(ucrt_xp_wcsspn(L"aabbcc", L"ab") == 4);
+    assert(ucrt_xp_wcsspn(L"xyz", L"ab") == 0);
+    assert(ucrt_xp_wcscspn(L"hello, world", L", ") == 5);
+    assert(ucrt_xp_wcscspn(L"abc", L"xyz") == 3);
+    assert(*ucrt_xp_wcspbrk(L"hello", L"lo") == L'l');
+    assert(ucrt_xp_wcspbrk(L"hello", L"xyz") == NULL);
+
+    /* wide: chr / rchr / str */
+    assert(ucrt_xp_wcslen(ucrt_xp_wcschr(L"hello", L'l')) == 3);
+    assert(ucrt_xp_wcsrchr(L"hello", L'l') != NULL);
+    assert(ucrt_xp_wcslen(ucrt_xp_wcsrchr(L"hello", L'l')) == 2);
+    assert(ucrt_xp_wcschr(L"hello", L'z') == NULL);
+    assert(*ucrt_xp_wcschr(L"hello", 0) == 0);
+    assert(ucrt_xp_wcslen(ucrt_xp_wcsstr(L"hello world", L"world")) == 5);
+    assert(ucrt_xp_wcsstr(L"hello", L"xyz") == NULL);
+    assert(ucrt_xp_wcsstr(L"hello", L"") != NULL);
+
+    /* wide: ncat / nicmp / dup */
+    ucrt_xp_wcscpy(wbuf, L"ab");
+    ucrt_xp_wcsncat(wbuf, L"cdef", 2);
+    assert(ucrt_xp_wcscmp(wbuf, L"abcd") == 0);
+    assert(ucrt_xp_wcsnicmp(L"HELLOx", L"helloY", 5) == 0);
+    assert(ucrt_xp_wcsnicmp(L"abc", L"abd", 3) < 0);
+    dup = ucrt_xp_wcsdup(L"copy");
+    assert(dup != NULL && ucrt_xp_wcscmp(dup, L"copy") == 0);
+    ucrt_xp_free(dup);
+
+    /* wide: reentrant tokenizer */
+    ucrt_xp_wcscpy(wbuf, L",a,,bc,");
+    tok = ucrt_xp_wcstok_r(wbuf, L",", &save);
+    assert(tok && ucrt_xp_wcscmp(tok, L"a") == 0);
+    tok = ucrt_xp_wcstok_r(NULL, L",", &save);
+    assert(tok && ucrt_xp_wcscmp(tok, L"bc") == 0);
+    assert(ucrt_xp_wcstok_r(NULL, L",", &save) == NULL);
+
+    /* wmem* */
+    ucrt_xp_wmemset(wbuf, L'x', 3);
+    wbuf[3] = 0;
+    assert(ucrt_xp_wcscmp(wbuf, L"xxx") == 0);
+    ucrt_xp_wmemcpy(wbuf, L"abc", 4);
+    assert(ucrt_xp_wmemcmp(wbuf, L"abc", 3) == 0);
+    assert(ucrt_xp_wmemchr(wbuf, L'c', 3) == wbuf + 2);
+    ucrt_xp_wmemmove(wbuf + 1, wbuf, 3);
+    assert(ucrt_xp_wcsncmp(wbuf, L"aabc", 4) == 0);
+
+    (void)cbuf;
+    printf("[OK] strspn/strcspn/strpbrk/strnlen + wcsspn/wcscspn/wcspbrk/wcschr/wcsrchr/wcsstr/wcsncat/wcsnicmp/wcsdup/wcstok_r/wmem*\n");
+}
+
 static void test_wide_printf(void)
 {
     wchar_t buf[128];
@@ -537,6 +606,7 @@ int main(void)
     test_guarded_call();
     test_format();
     test_wide();
+    test_span_search();
     test_wide_printf();
     test_wide_scanf();
     test_string();

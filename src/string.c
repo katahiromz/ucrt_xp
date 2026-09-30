@@ -219,3 +219,50 @@ __declspec(dllexport) int __cdecl ucrt_xp_strnicmp(
                        a, (int)la, b, (int)lb);
     return r - CSTR_EQUAL;
 }
+
+/* ------------------------------------------------------------------ */
+/* Span / search helpers: strspn, strcspn, strpbrk, strnlen            */
+/* ------------------------------------------------------------------ */
+
+/* Length of the initial segment of s consisting only of bytes in accept. */
+__declspec(dllexport) size_t __cdecl ucrt_xp_strspn(const char *s, const char *accept)
+{
+    const char *p = s;
+    if (!s || !accept) return 0;
+    for (; *p; p++) {
+        if (!ucrt_xp_strchr(accept, (unsigned char)*p)) break;
+    }
+    return (size_t)(p - s);
+}
+
+/* Length of the initial segment of s containing no bytes from reject. */
+__declspec(dllexport) size_t __cdecl ucrt_xp_strcspn(const char *s, const char *reject)
+{
+    const char *p = s;
+    if (!s) return 0;
+    if (!reject) return ucrt_xp_strlen(s);
+    for (; *p; p++) {
+        if (ucrt_xp_strchr(reject, (unsigned char)*p)) break;
+    }
+    return (size_t)(p - s);
+}
+
+/* First byte in s that matches any byte in accept, or NULL. */
+__declspec(dllexport) char* __cdecl ucrt_xp_strpbrk(const char *s, const char *accept)
+{
+    if (!s || !accept) return NULL;
+    for (; *s; s++) {
+        if (ucrt_xp_strchr(accept, (unsigned char)*s)) return (char *)s;
+    }
+    return NULL;
+}
+
+__declspec(dllexport) size_t __cdecl ucrt_xp_strnlen(const char *s, size_t maxlen)
+{
+    size_t i;
+    if (!s) return 0;
+    for (i = 0; i < maxlen; i++) {
+        if (s[i] == 0) return i;
+    }
+    return maxlen;
+}

@@ -387,6 +387,23 @@ __declspec(dllexport) int    __cdecl ucrt_xp_wcsncmp(const wchar_t *a, const wch
 __declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcscpy(wchar_t *dst, const wchar_t *src);
 __declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcsncpy(wchar_t *dst, const wchar_t *src, size_t n);
 __declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcscat(wchar_t *dst, const wchar_t *src);
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcsncat(wchar_t *dst, const wchar_t *src, size_t n);
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcschr(const wchar_t *s, wchar_t c);
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcsrchr(const wchar_t *s, wchar_t c);
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcsstr(const wchar_t *haystack, const wchar_t *needle);
+__declspec(dllexport) size_t   __cdecl ucrt_xp_wcsspn(const wchar_t *s, const wchar_t *accept);
+__declspec(dllexport) size_t   __cdecl ucrt_xp_wcscspn(const wchar_t *s, const wchar_t *reject);
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcspbrk(const wchar_t *s, const wchar_t *accept);
+__declspec(dllexport) int      __cdecl ucrt_xp_wcsnicmp(const wchar_t *a, const wchar_t *b, size_t n);
+/* Allocated with ucrt_xp_malloc; free with ucrt_xp_free. */
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcsdup(const wchar_t *s);
+/* Reentrant wcstok (explicit saveptr, like strtok_r / MSVC wcstok_s). */
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcstok_r(wchar_t *str, const wchar_t *delim, wchar_t **saveptr);
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wmemcpy(wchar_t *dst, const wchar_t *src, size_t n);
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wmemmove(wchar_t *dst, const wchar_t *src, size_t n);
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wmemset(wchar_t *dst, wchar_t c, size_t n);
+__declspec(dllexport) int      __cdecl ucrt_xp_wmemcmp(const wchar_t *a, const wchar_t *b, size_t n);
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wmemchr(const wchar_t *buf, wchar_t c, size_t n);
 __declspec(dllexport) int    __cdecl ucrt_xp_wcsicmp_l(
     const wchar_t *a, const wchar_t *b, ucrt_xp_locale_t loc);
 
@@ -459,6 +476,10 @@ __declspec(dllexport) char*  __cdecl ucrt_xp_strchr(const char *s, int c);
 __declspec(dllexport) char*  __cdecl ucrt_xp_strrchr(const char *s, int c);
 __declspec(dllexport) char*  __cdecl ucrt_xp_strstr(const char *haystack, const char *needle);
 __declspec(dllexport) char*  __cdecl ucrt_xp_strdup(const char *s);
+__declspec(dllexport) size_t __cdecl ucrt_xp_strspn(const char *s, const char *accept);
+__declspec(dllexport) size_t __cdecl ucrt_xp_strcspn(const char *s, const char *reject);
+__declspec(dllexport) char*  __cdecl ucrt_xp_strpbrk(const char *s, const char *accept);
+__declspec(dllexport) size_t __cdecl ucrt_xp_strnlen(const char *s, size_t maxlen);
 /* Reentrant strtok - see string.c's comment on why this takes an
  * explicit saveptr instead of the classic CRT's hidden internal state. */
 __declspec(dllexport) char*  __cdecl ucrt_xp_strtok_r(char *str, const char *delim, char **saveptr);

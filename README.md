@@ -20,8 +20,8 @@ XP at all:
 | stdio | `src/stdio.c` | POSIX-style fd table (`_open`/`_read`/`_write`/`_close`/`_lseek`) + buffered `FILE*` layer with text-mode CRLF↔LF, `fgets`/`fputs`/`ungetc`/`clearerr`/`rewind`/`fileno`, `remove`/`rename`, standard streams, and a magic field on `UCRT_XP_FILE` that rejects use-after-`fclose()` / garbage pointers cleanly |
 | printf engine | `src/format.c` | `vsnprintf`/`snprintf`/`vsprintf`/`sprintf` (int/uint/hex/oct/string/char/pointer/float) |
 | scanf engine | `src/scan.c` | `scanf`/`fscanf`/`sscanf` subset (`%d %i %u %o %x %c %s %f %n`) |
-| Wide-char layer | `src/wide.c` | `_wopen`/`_wfopen`, `wcslen`/`wcsnlen`/`wcscmp`/`wcsncmp`/`wcscpy`/`wcsncpy`/`wcscat`, `_wcsicmp` + `wcsicmp_l`, ANSI↔UTF-16 conversion, wide printf family |
-| `<string.h>` | `src/string.c` | `mem*`/`str*` family, `_strnicmp`, reentrant `strtok_r` |
+| Wide-char layer | `src/wide.c` | `_wopen`/`_wfopen`, `wcslen`/`wcsnlen`/`wcscmp`/`wcsncmp`/`wcscpy`/`wcsncpy`/`wcscat`/`wcsncat`, `wcschr`/`wcsrchr`/`wcsstr`/`wcsspn`/`wcscspn`/`wcspbrk`, `_wcsnicmp`/`_wcsdup`/`wcstok_s`, `wmem*`, `_wcsicmp` + `wcsicmp_l`, ANSI↔UTF-16 conversion, wide printf family |
+| `<string.h>` | `src/string.c` | `mem*`/`str*` family (incl. `strspn`/`strcspn`/`strpbrk`/`strnlen`), `_strnicmp`, reentrant `strtok_r` |
 | `<ctype.h>` | `src/ctype.c` | `is*`/`toupper`/`tolower`, fixed to the "C"/ASCII locale (use `locale.c`'s `_l` functions for locale-aware classification) |
 | `<stdlib.h>` numeric/algorithms | `src/convert.c` | `atoi`/`atol`/`atof`/`strtol`/`strtoul`/`strtod`, `abs`/`labs`, always-per-thread `rand`/`srand`, `qsort`/`bsearch` |
 | Process lifetime | `src/process.c` | TLS-backed `errno`, `exit`/`abort`/`atexit` |
