@@ -55,7 +55,7 @@ extern "C" {
  * changes (new functions appended at the end of this header).
  */
 #define UCRT_XP_ABI_MAJOR 1
-#define UCRT_XP_ABI_MINOR 12  /* 12: wide scanf_s + improved fscanf_s */
+#define UCRT_XP_ABI_MINOR 13
 #define UCRT_XP_ABI_VERSION ((UCRT_XP_ABI_MAJOR << 16) | UCRT_XP_ABI_MINOR)
 
 typedef struct UCRT_XP_VERSION_INFO {
