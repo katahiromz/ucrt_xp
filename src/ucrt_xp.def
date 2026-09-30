@@ -1,0 +1,193 @@
+; ucrt_xp.def - explicit export ordinals.
+;
+; WHY THIS FILE EXISTS: without a .def file, exported ordinal numbers are
+; assigned by the linker in whatever order it feels like, and can shift
+; between builds even with zero source changes. Some old-style import
+; libraries / manually-bound callers link by ordinal for speed. Pinning
+; ordinals here means ucrt_xp.dll can be rebuilt (bug fixes, new
+; functions appended at the end) without invalidating anything that
+; happens to bind by ordinal instead of by name.
+;
+; RULE: never reuse or renumber an existing ordinal. New exports always
+; get the next unused number.
+
+LIBRARY ucrt_xp
+
+EXPORTS
+    ucrt_xp_init                  @1
+    ucrt_xp_get_version           @2
+
+    ucrt_xp_once                  @10
+
+    ucrt_xp_cond_init             @20
+    ucrt_xp_cond_destroy          @21
+    ucrt_xp_cond_wait             @22
+    ucrt_xp_cond_signal           @23
+    ucrt_xp_cond_broadcast        @24
+
+    ucrt_xp_heap_init             @30
+    ucrt_xp_malloc                @31
+    ucrt_xp_calloc                @32
+    ucrt_xp_realloc               @33
+    ucrt_xp_free                  @34
+
+    ucrt_xp_locale_create         @40
+    ucrt_xp_locale_addref         @41
+    ucrt_xp_locale_release        @42
+    ucrt_xp_locale_get_thread     @43
+    ucrt_xp_locale_set_thread     @44
+    ucrt_xp_stricmp_l             @45
+    ucrt_xp_locale_get_lconv      @46
+    ucrt_xp_toupper_l             @47
+    ucrt_xp_tolower_l             @48
+    ucrt_xp_stricmp               @49
+
+    ucrt_xp_set_unhandled_handler @50
+    ucrt_xp_seh_filter            @51
+    ucrt_xp_guarded_call          @52
+    ucrt_xp_set_se_translator     @53
+
+    ucrt_xp_open                  @60
+    ucrt_xp_close                 @61
+    ucrt_xp_read                  @62
+    ucrt_xp_write                 @63
+    ucrt_xp_lseek                 @64
+    ucrt_xp_fopen                 @65
+    ucrt_xp_fclose                @66
+    ucrt_xp_fread                 @67
+    ucrt_xp_fwrite                @68
+    ucrt_xp_fflush                @69
+    ucrt_xp_fseek                 @70
+    ucrt_xp_ftell                 @71
+    ucrt_xp_fgetc                 @72
+    ucrt_xp_fputc                 @73
+    ucrt_xp_feof                  @74
+    ucrt_xp_ferror                @75
+    ucrt_xp_fprintf               @76
+    ucrt_xp_clearerr              @77
+    ucrt_xp_rewind                @78
+    ucrt_xp_fileno                @79
+    ucrt_xp_ungetc                @207
+    ucrt_xp_fgets                 @208
+    ucrt_xp_fputs                 @209
+    ucrt_xp_remove                @210
+    ucrt_xp_rename                @211
+    ucrt_xp_fdopen                @212
+    ucrt_xp_freopen               @213
+    ucrt_xp_setvbuf               @214
+    ucrt_xp_setbuf                @215
+    ucrt_xp_fseeki64              @216
+    ucrt_xp_ftelli64              @217
+    ucrt_xp_access                @218
+    ucrt_xp_stat                  @219
+    ucrt_xp_mkdir                 @220
+    ucrt_xp_chdir                 @221
+    ucrt_xp_getcwd                @222
+
+    ucrt_xp_vsnprintf             @80
+    ucrt_xp_snprintf              @81
+    ucrt_xp_vsprintf              @82
+    ucrt_xp_sprintf               @83
+    ucrt_xp_vsscanf               @84
+    ucrt_xp_sscanf                @85
+    ucrt_xp_vfscanf               @86
+    ucrt_xp_fscanf                @87
+    ucrt_xp_scanf                 @88
+
+    ucrt_xp_wopen                 @90
+    ucrt_xp_wfopen                @91
+    ucrt_xp_wcslen                @92
+    ucrt_xp_wcscmp                @93
+    ucrt_xp_wcscpy                @94
+    ucrt_xp_wcsicmp_l             @95
+    ucrt_xp_ansi_to_wide          @96
+    ucrt_xp_wide_to_ansi          @97
+    ucrt_xp_vswprintf             @98
+    ucrt_xp_swprintf              @99
+    ucrt_xp_fwprintf              @100
+    ucrt_xp_wcsicmp               @101
+    ucrt_xp_wcsncpy               @102
+    ucrt_xp_wcscat                @103
+    ucrt_xp_wcsncmp               @104
+    ucrt_xp_wcsnlen               @105
+
+    ucrt_xp_memcpy                @110
+    ucrt_xp_memmove               @111
+    ucrt_xp_memset                @112
+    ucrt_xp_memcmp                @113
+    ucrt_xp_memchr                @114
+    ucrt_xp_strlen                @115
+    ucrt_xp_strcpy                @116
+    ucrt_xp_strncpy               @117
+    ucrt_xp_strcat                @118
+    ucrt_xp_strncat               @119
+    ucrt_xp_strcmp                @120
+    ucrt_xp_strncmp               @121
+    ucrt_xp_strchr                @122
+    ucrt_xp_strrchr               @123
+    ucrt_xp_strstr                @124
+    ucrt_xp_strdup                @125
+    ucrt_xp_strtok_r              @126
+    ucrt_xp_strnicmp              @127
+
+    ucrt_xp_isalpha                @140
+    ucrt_xp_isdigit                @141
+    ucrt_xp_isalnum                @142
+    ucrt_xp_isspace                @143
+    ucrt_xp_isupper                @144
+    ucrt_xp_islower                @145
+    ucrt_xp_ispunct                @146
+    ucrt_xp_iscntrl                @147
+    ucrt_xp_isxdigit               @148
+    ucrt_xp_isprint                @149
+    ucrt_xp_isgraph                @150
+    ucrt_xp_toupper                @151
+    ucrt_xp_tolower                @152
+
+    ucrt_xp_strtol                 @160
+    ucrt_xp_strtoul                @161
+    ucrt_xp_atoi                   @162
+    ucrt_xp_atol                   @163
+    ucrt_xp_strtod                 @164
+    ucrt_xp_atof                   @165
+    ucrt_xp_abs                    @166
+    ucrt_xp_labs                   @167
+    ucrt_xp_srand                  @168
+    ucrt_xp_rand                   @169
+    ucrt_xp_qsort                  @170
+    ucrt_xp_bsearch                @171
+    ucrt_xp_itoa                   @172
+    ucrt_xp_ltoa                   @173
+    ucrt_xp_ultoa                  @174
+
+    ucrt_xp_errno_location         @180
+    ucrt_xp_get_errno              @181
+    ucrt_xp_set_errno              @182
+    ucrt_xp_atexit                 @183
+    ucrt_xp_exit                   @184
+    ucrt_xp_abort                  @185
+    ucrt_xp_strerror               @186
+    ucrt_xp_perror                 @187
+    ucrt_xp_getenv                 @188
+    ucrt_xp_system                 @189
+
+    ucrt_xp_time                   @190
+    ucrt_xp_clock                  @191
+    ucrt_xp_gmtime                 @192
+    ucrt_xp_localtime              @193
+    ucrt_xp_compute_yday           @194
+    ucrt_xp_strftime               @195
+
+    ucrt_xp_stdin                  @200
+    ucrt_xp_stdout                 @201
+    ucrt_xp_stderr                 @202
+    ucrt_xp_printf                 @203
+    ucrt_xp_puts                   @204
+    ucrt_xp_putchar                @205
+    ucrt_xp_getchar                @206
+
+    ucrt_xp_vswscanf              @223
+    ucrt_xp_swscanf               @224
+    ucrt_xp_vfwscanf              @225
+    ucrt_xp_fwscanf               @226
+    ucrt_xp_wscanf                @227

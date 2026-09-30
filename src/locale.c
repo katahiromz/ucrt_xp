@@ -1,0 +1,217 @@
+/*
+ * locale.c - locale objects as immutable, reference-counted values instead
+ * of process-global mutable state. This sidesteps the classic XP-era CRT
+ * bug class where one thread's setlocale() races another thread's
+ * strcoll()/toupper() and both observe a half-updated LC_* table.
+ *
+ * A ucrt_xp_locale_t, once created, never changes. "Changing locale" means
+ * creating a new object and pointing the current thread's slot at it;
+ * anyone still holding a reference to the old object keeps working
+ * against a consistent snapshot.
+ */
+#include "internal.h"
+#include <string.h>
+#include <stdlib.h>
+
+struct UCRT_XP_LOCALE {
+    LONG refcount;
+    char name[64];
+    /* Real implementation would cache LCID, code page, LC_* tables etc.
+     * resolved once at creation time via GetLocaleInfoA / setlocale. */
+    LCID lcid;
+    UINT codepage;
+    UCRT_XP_LCONV lconv; /* resolved once here, never touched again */
+};
+
+static DWORD g_locale_tls = TLS_OUT_OF_INDEXES;
+static UCRT_XP_ONCE g_locale_tls_once = UCRT_XP_ONCE_INIT;
+
+static BOOL __cdecl init_locale_tls(void *param)
+{
+    (void)param;
+    g_locale_tls = TlsAlloc();
+    return g_locale_tls != TLS_OUT_OF_INDEXES;
+}
+
+static const struct { const char *name; LANGID langid; } g_locale_table[] = {
+    /* XP predates LocaleNameToLCID (that's Vista+), so common BCP-47-ish
+     * names are resolved through a small static table built from
+     * MAKELANGID(primary, sublang) instead - this is exactly what real
+     * XP-era CRTs did internally (see setlocale()'s XP implementation).
+     * Not exhaustive; add entries as needed rather than trying to cover
+     * every LCID XP knows about. */
+    { "en-US", MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US) },
+    { "en-GB", MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_UK) },
+    { "ja-JP", MAKELANGID(LANG_JAPANESE, SUBLANG_DEFAULT) },
+    { "de-DE", MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN) },
+    { "fr-FR", MAKELANGID(LANG_FRENCH, SUBLANG_FRENCH) },
+    { "es-ES", MAKELANGID(LANG_SPANISH, SUBLANG_SPANISH) },
+    { "it-IT", MAKELANGID(LANG_ITALIAN, SUBLANG_ITALIAN) },
+    { "pt-BR", MAKELANGID(LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN) },
+    { "ru-RU", MAKELANGID(LANG_RUSSIAN, SUBLANG_DEFAULT) },
+    { "zh-CN", MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED) },
+    { "zh-TW", MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL) },
+    { "ko-KR", MAKELANGID(LANG_KOREAN, SUBLANG_DEFAULT) },
+};
+#define UCRT_XP_LOCALE_TABLE_COUNT \
+    (sizeof(g_locale_table) / sizeof(g_locale_table[0]))
+
+static LCID resolve_lcid_by_name(const char *name)
+{
+    size_t i;
+    for (i = 0; i < UCRT_XP_LOCALE_TABLE_COUNT; i++) {
+        if (lstrcmpiA(name, g_locale_table[i].name) == 0) {
+            return MAKELCID(g_locale_table[i].langid, SORT_DEFAULT);
+        }
+    }
+    return 0; /* not found */
+}
+
+__declspec(dllexport) ucrt_xp_locale_t __cdecl ucrt_xp_locale_create(const char *name)
+{
+    struct UCRT_XP_LOCALE *loc = (struct UCRT_XP_LOCALE *)
+        ucrt_xp_malloc(sizeof(struct UCRT_XP_LOCALE));
+    if (!loc) return NULL;
+
+    loc->refcount = 1;
+    if (name) {
+        lstrcpynA(loc->name, name, sizeof(loc->name));
+    } else {
+        lstrcpynA(loc->name, "C", sizeof(loc->name));
+    }
+
+    /* "C"/"POSIX" map to the invariant locale; named locales are looked
+     * up in the static table above (period-correct for XP, which has no
+     * LocaleNameToLCID); anything else falls back to the user's own
+     * Control-Panel-configured default rather than failing outright. */
+    if (lstrcmpiA(loc->name, "C") == 0 || lstrcmpiA(loc->name, "POSIX") == 0) {
+        loc->lcid = LOCALE_INVARIANT;
+        loc->codepage = CP_ACP;
+    } else {
+        LCID found = resolve_lcid_by_name(loc->name);
+        loc->lcid = found ? found : LOCALE_USER_DEFAULT;
+        loc->codepage = CP_ACP;
+    }
+
+    /* Resolve LC_NUMERIC/LC_MONETARY-ish fields exactly once, here, so
+     * that every other function just reads an immutable struct instead
+     * of calling into the OS (and instead of touching any process-global
+     * CRT locale state, which is the bug class this design avoids). */
+    if (GetLocaleInfoA(loc->lcid, LOCALE_SDECIMAL, loc->lconv.decimal_point,
+                        sizeof(loc->lconv.decimal_point)) == 0) {
+        lstrcpynA(loc->lconv.decimal_point, ".", sizeof(loc->lconv.decimal_point));
+    }
+    if (GetLocaleInfoA(loc->lcid, LOCALE_STHOUSAND, loc->lconv.thousands_sep,
+                        sizeof(loc->lconv.thousands_sep)) == 0) {
+        lstrcpynA(loc->lconv.thousands_sep, ",", sizeof(loc->lconv.thousands_sep));
+    }
+    if (GetLocaleInfoA(loc->lcid, LOCALE_SCURRENCY, loc->lconv.currency_symbol,
+                        sizeof(loc->lconv.currency_symbol)) == 0) {
+        lstrcpynA(loc->lconv.currency_symbol, "$", sizeof(loc->lconv.currency_symbol));
+    }
+
+    return (ucrt_xp_locale_t)loc;
+}
+
+__declspec(dllexport) ucrt_xp_locale_t __cdecl ucrt_xp_locale_addref(ucrt_xp_locale_t loc)
+{
+    if (loc) InterlockedIncrement(&loc->refcount);
+    return loc;
+}
+
+__declspec(dllexport) void __cdecl ucrt_xp_locale_release(ucrt_xp_locale_t loc)
+{
+    if (!loc) return;
+    if (InterlockedDecrement(&loc->refcount) == 0) {
+        ucrt_xp_free(loc);
+    }
+}
+
+LCID ucrt_xp__locale_lcid(ucrt_xp_locale_t loc)
+{
+    if (!loc) loc = ucrt_xp_locale_get_thread();
+    return loc ? loc->lcid : LOCALE_USER_DEFAULT;
+}
+
+__declspec(dllexport) ucrt_xp_locale_t __cdecl ucrt_xp_locale_get_thread(void)
+{
+    ucrt_xp_locale_t loc;
+    ucrt_xp_once(&g_locale_tls_once, init_locale_tls, NULL);
+
+    loc = (ucrt_xp_locale_t)TlsGetValue(g_locale_tls);
+    if (!loc) {
+        /* Lazily create the default "C" locale for this thread the first
+         * time it's asked, rather than requiring explicit setup. */
+        loc = ucrt_xp_locale_create("C");
+        if (loc) TlsSetValue(g_locale_tls, loc);
+    }
+    return loc;
+}
+
+__declspec(dllexport) void __cdecl ucrt_xp_locale_set_thread(ucrt_xp_locale_t loc)
+{
+    ucrt_xp_locale_t old;
+    ucrt_xp_once(&g_locale_tls_once, init_locale_tls, NULL);
+
+    old = (ucrt_xp_locale_t)TlsGetValue(g_locale_tls);
+    ucrt_xp_locale_addref(loc);
+    TlsSetValue(g_locale_tls, loc);
+    if (old) ucrt_xp_locale_release(old);
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_stricmp_l(
+    const char *a, const char *b, ucrt_xp_locale_t loc)
+{
+    ucrt_xp_locale_t use_loc = loc ? loc : ucrt_xp_locale_get_thread();
+    /* CompareStringA gives locale-correct case folding without touching
+     * any process-global CRT locale state. */
+    int r = CompareStringA(use_loc->lcid, NORM_IGNORECASE, a, -1, b, -1);
+    /* CompareStringA returns 1/2/3 for </==/>; normalize to -1/0/1. */
+    return r - CSTR_EQUAL;
+}
+
+/* Non-locale variant: uses the calling thread's current locale
+ * (same semantics as MSVC's _stricmp). */
+__declspec(dllexport) int __cdecl ucrt_xp_stricmp(
+    const char *a, const char *b)
+{
+    return ucrt_xp_stricmp_l(a, b, NULL);
+}
+
+__declspec(dllexport) BOOL __cdecl ucrt_xp_locale_get_lconv(
+    ucrt_xp_locale_t loc, UCRT_XP_LCONV *out)
+{
+    ucrt_xp_locale_t use_loc = loc ? loc : ucrt_xp_locale_get_thread();
+    if (!use_loc || !out) return FALSE;
+    /* Struct copy of the cached, immutable snapshot - safe to hand back
+     * to the caller with no lifetime coupling to the locale object. */
+    *out = use_loc->lconv;
+    return TRUE;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_toupper_l(int c, ucrt_xp_locale_t loc)
+{
+    ucrt_xp_locale_t use_loc = loc ? loc : ucrt_xp_locale_get_thread();
+    char ch = (char)c;
+    char buf[2];
+    buf[0] = ch;
+    buf[1] = 0;
+    if (CharUpperBuffA(buf, 1) == 0) return c;
+    (void)use_loc; /* LCMapStringA(use_loc->lcid, ...) would be used for a
+                     * fully locale-correct mapping; CharUpperBuffA covers
+                     * the common single-byte-codepage case adequately for
+                     * this reference implementation. */
+    return (unsigned char)buf[0];
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_tolower_l(int c, ucrt_xp_locale_t loc)
+{
+    ucrt_xp_locale_t use_loc = loc ? loc : ucrt_xp_locale_get_thread();
+    char ch = (char)c;
+    char buf[2];
+    buf[0] = ch;
+    buf[1] = 0;
+    if (CharLowerBuffA(buf, 1) == 0) return c;
+    (void)use_loc;
+    return (unsigned char)buf[0];
+}
