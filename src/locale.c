@@ -133,6 +133,13 @@ LCID ucrt_xp__locale_lcid(ucrt_xp_locale_t loc)
     return loc ? loc->lcid : LOCALE_USER_DEFAULT;
 }
 
+const char *ucrt_xp__locale_name(ucrt_xp_locale_t loc)
+{
+    if (!loc) loc = ucrt_xp_locale_get_thread();
+    return loc ? loc->name : "C";
+}
+
+
 __declspec(dllexport) ucrt_xp_locale_t __cdecl ucrt_xp_locale_get_thread(void)
 {
     ucrt_xp_locale_t loc;
@@ -345,4 +352,40 @@ __declspec(dllexport) int __cdecl ucrt_xp_strnicoll(
     const char *a, const char *b, size_t n)
 {
     return ucrt_xp_strnicoll_l(a, b, n, NULL);
+}
+
+/* ------------------------------------------------------------------ */
+/* Classic setlocale / localeconv (thin layer over locale objects)     */
+/* ------------------------------------------------------------------ */
+
+__declspec(dllexport) char* __cdecl ucrt_xp_setlocale(int category, const char *locale)
+{
+    static char name_buf[64];
+    ucrt_xp_locale_t loc;
+    (void)category; /* LC_* ignored: one process/thread locale object */
+
+    if (!locale) {
+        /* Query: return current thread locale name. */
+        loc = ucrt_xp_locale_get_thread();
+        if (!loc) return NULL;
+        lstrcpynA(name_buf, ucrt_xp__locale_name(loc), sizeof(name_buf));
+        return name_buf;
+    }
+    loc = ucrt_xp_locale_create(locale);
+    if (!loc) return NULL;
+    ucrt_xp_locale_set_thread(loc);
+    ucrt_xp_locale_release(loc); /* set_thread addref'd */
+    lstrcpynA(name_buf, locale, sizeof(name_buf));
+    return name_buf;
+}
+
+__declspec(dllexport) UCRT_XP_LCONV* __cdecl ucrt_xp_localeconv(void)
+{
+    static UCRT_XP_LCONV cached;
+    if (!ucrt_xp_locale_get_lconv(NULL, &cached)) {
+        lstrcpynA(cached.decimal_point, ".", sizeof(cached.decimal_point));
+        lstrcpynA(cached.thousands_sep, ",", sizeof(cached.thousands_sep));
+        lstrcpynA(cached.currency_symbol, "$", sizeof(cached.currency_symbol));
+    }
+    return &cached;
 }

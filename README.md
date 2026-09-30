@@ -46,8 +46,12 @@ supported via `ucrt_xp_static`.
 | convert | `strtol`/`strtoll`/`strtod`/`strtof`, `_itoa`, `rand`/`rand_s` |
 | process | `getenv`/`_putenv`, `_pipe`/`_popen`, spawn/exec, `_beginthread*` |
 | time | 64-bit `time_t`, reentrant `localtime`/`gmtime`, `strftime`, `asctime` |
-| fs | `_access`/`_stat`/`_findfirst`, wide path helpers |
+| fs | `_access`/`_stat`/`_findfirst`, `_fullpath`/`_splitpath`, wide path helpers |
+| fd | `_dup`/`_dup2`/`_setmode`/`_get_osfhandle`/`_eof`/`_lseeki64` |
+| locale names | `setlocale` / `localeconv` |
+| multibyte | `mblen`/`mbtowc`/`mbstowcs`/`wcstombs` |
 | exception | SEH trampoline + `ucrt_xp_guarded_call` |
+| assert | `assert` macro → `ucrt_xp_assert` |
 
 **Not covered (by design):** `<math.h>` transcendentals (use the compiler’s),
 `setjmp`/`longjmp` (compiler intrinsics), full secure-CRT `*_s` surface.
@@ -94,4 +98,4 @@ Targets XP subsystem (`5.01`) when built with MSVC.
 3. Breaking change → bump `UCRT_XP_ABI_MAJOR` and ship a new DLL name.
 4. Every new export gets the next ordinal in `ucrt_xp.def`.
 
-Current ABI: **1.7** (`UCRT_XP_ABI_MAJOR.MINOR`).
+Current ABI: **1.9** (`UCRT_XP_ABI_MAJOR.MINOR`).

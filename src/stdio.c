@@ -1141,3 +1141,290 @@ __declspec(dllexport) int __cdecl ucrt_xp_findclose(intptr_t handle)
     ucrt_xp_free(ctx);
     return 0;
 }
+
+/* ------------------------------------------------------------------ */
+/* fd extras: dup, setmode, osfhandle, eof, lseeki64 aliases           */
+/* ------------------------------------------------------------------ */
+
+__declspec(dllexport) int __cdecl ucrt_xp_dup(int fd)
+{
+    FdEntry *e = get_fd(fd);
+    HANDLE hdup;
+    if (!e) return -1;
+    if (!DuplicateHandle(GetCurrentProcess(), e->handle,
+                         GetCurrentProcess(), &hdup, 0, FALSE,
+                         DUPLICATE_SAME_ACCESS))
+        return -1;
+    return alloc_fd(hdup, e->text_mode, e->append_mode);
+}
+
+/* Grow the fd table so that slot `fd` exists (not necessarily in use). */
+static int ensure_fd_slot(int fd)
+{
+    int need_blocks, b;
+    if (fd < 0) return -1;
+    ucrt_xp_once(&g_fd_once, init_fd_table, NULL);
+    need_blocks = fd / UCRT_XP_FD_BLOCK + 1;
+    EnterCriticalSection(&g_fd_lock);
+    while (g_fd_block_count < need_blocks) {
+        FdEntry *new_block = (FdEntry *)ucrt_xp_malloc(
+            (size_t)UCRT_XP_FD_BLOCK * sizeof(FdEntry));
+        FdEntry **grown;
+        if (!new_block) { LeaveCriticalSection(&g_fd_lock); return -1; }
+        ZeroMemory(new_block, (size_t)UCRT_XP_FD_BLOCK * sizeof(FdEntry));
+        grown = (FdEntry **)ucrt_xp_realloc(
+            g_fd_blocks, (size_t)(g_fd_block_count + 1) * sizeof(FdEntry *));
+        if (!grown) {
+            ucrt_xp_free(new_block);
+            LeaveCriticalSection(&g_fd_lock);
+            return -1;
+        }
+        grown[g_fd_block_count] = new_block;
+        g_fd_blocks = grown;
+        g_fd_block_count++;
+    }
+    (void)b;
+    LeaveCriticalSection(&g_fd_lock);
+    return 0;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_dup2(int fd1, int fd2)
+{
+    FdEntry *e1;
+    HANDLE hdup;
+    int text_mode, append_mode;
+    int b, i;
+
+    if (fd2 < 0) return -1;
+    if (fd1 == fd2) return fd2;
+
+    e1 = get_fd(fd1);
+    if (!e1) return -1;
+    text_mode = e1->text_mode;
+    append_mode = e1->append_mode;
+
+    if (!DuplicateHandle(GetCurrentProcess(), e1->handle,
+                         GetCurrentProcess(), &hdup, 0, FALSE,
+                         DUPLICATE_SAME_ACCESS))
+        return -1;
+
+    if (ensure_fd_slot(fd2) != 0) {
+        CloseHandle(hdup);
+        return -1;
+    }
+
+    b = fd2 / UCRT_XP_FD_BLOCK;
+    i = fd2 % UCRT_XP_FD_BLOCK;
+
+    EnterCriticalSection(&g_fd_lock);
+    {
+        FdEntry *slot = &g_fd_blocks[b][i];
+        if (slot->in_use) {
+            CloseHandle(slot->handle);
+            slot->in_use = 0;
+        }
+        slot->handle = hdup;
+        slot->in_use = 1;
+        slot->text_mode = text_mode;
+        slot->append_mode = append_mode;
+    }
+    LeaveCriticalSection(&g_fd_lock);
+    return fd2;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_setmode(int fd, int mode)
+{
+    FdEntry *e = get_fd(fd);
+    int prev;
+    if (!e) return -1;
+    prev = e->text_mode ? UCRT_XP_O_TEXT : UCRT_XP_O_BINARY;
+    if (mode & UCRT_XP_O_TEXT) e->text_mode = 1;
+    else if (mode & UCRT_XP_O_BINARY) e->text_mode = 0;
+    else return -1;
+    return prev;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_commit(int fd)
+{
+    FdEntry *e = get_fd(fd);
+    if (!e) return -1;
+    return FlushFileBuffers(e->handle) ? 0 : -1;
+}
+
+__declspec(dllexport) intptr_t __cdecl ucrt_xp_get_osfhandle(int fd)
+{
+    FdEntry *e = get_fd(fd);
+    if (!e) return -1;
+    return (intptr_t)e->handle;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_open_osfhandle(intptr_t osfhandle, int flags)
+{
+    HANDLE h = (HANDLE)osfhandle;
+    if (h == NULL || h == INVALID_HANDLE_VALUE) return -1;
+    return alloc_fd(h,
+                    (flags & UCRT_XP_O_TEXT) ? 1 : 0,
+                    (flags & UCRT_XP_O_APPEND) ? 1 : 0);
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_eof(int fd)
+{
+    FdEntry *e = get_fd(fd);
+    LARGE_INTEGER pos, size, zero;
+    if (!e) return -1;
+    zero.QuadPart = 0;
+    if (!SetFilePointerEx(e->handle, zero, &pos, FILE_CURRENT)) return -1;
+    if (!GetFileSizeEx(e->handle, &size)) return -1;
+    return pos.QuadPart >= size.QuadPart ? 1 : 0;
+}
+
+__declspec(dllexport) __int64 __cdecl ucrt_xp_lseeki64(int fd, __int64 offset, int origin)
+{
+    return ucrt_xp_lseek(fd, offset, origin);
+}
+
+__declspec(dllexport) __int64 __cdecl ucrt_xp_telli64(int fd)
+{
+    return ucrt_xp_lseek(fd, 0, UCRT_XP_SEEK_CUR);
+}
+
+__declspec(dllexport) long __cdecl ucrt_xp_tell(int fd)
+{
+    return (long)ucrt_xp_telli64(fd);
+}
+
+/* ------------------------------------------------------------------ */
+/* fgetpos / fsetpos                                                   */
+/* ------------------------------------------------------------------ */
+
+__declspec(dllexport) int __cdecl ucrt_xp_fgetpos(UCRT_XP_FILE *f, __int64 *pos)
+{
+    __int64 p;
+    if (!f || !pos || f->magic != UCRT_XP_FILE_MAGIC) return -1;
+    p = ucrt_xp_ftelli64(f);
+    if (p < 0) return -1;
+    *pos = p;
+    return 0;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_fsetpos(UCRT_XP_FILE *f, const __int64 *pos)
+{
+    if (!f || !pos || f->magic != UCRT_XP_FILE_MAGIC) return -1;
+    return ucrt_xp_fseeki64(f, *pos, UCRT_XP_SEEK_SET);
+}
+
+/* ------------------------------------------------------------------ */
+/* Path helpers: fullpath, makepath, splitpath, rmdir, unlink          */
+/* ------------------------------------------------------------------ */
+
+__declspec(dllexport) char* __cdecl ucrt_xp_fullpath(char *absPath, const char *relPath, size_t maxLength)
+{
+    DWORD n;
+    if (!relPath || !absPath || maxLength == 0) return NULL;
+    n = GetFullPathNameA(relPath, (DWORD)maxLength, absPath, NULL);
+    if (n == 0 || n >= maxLength) return NULL;
+    return absPath;
+}
+
+__declspec(dllexport) void __cdecl ucrt_xp_splitpath(const char *path, char *drive, char *dir, char *fname, char *ext)
+{
+    const char *p = path ? path : "";
+    const char *slash, *dot;
+    size_t n;
+
+    if (drive) drive[0] = 0;
+    if (dir) dir[0] = 0;
+    if (fname) fname[0] = 0;
+    if (ext) ext[0] = 0;
+
+    if (p[0] && p[1] == ':') {
+        if (drive) { drive[0] = p[0]; drive[1] = ':'; drive[2] = 0; }
+        p += 2;
+    }
+    slash = p;
+    {
+        const char *q;
+        for (q = p; *q; q++)
+            if (*q == '\\' || *q == '/') slash = q;
+    }
+    if (slash != p || *p == '\\' || *p == '/') {
+        if (*slash == '\\' || *slash == '/') {
+            n = (size_t)(slash - p) + 1;
+            if (dir) { if (n > 255) n = 255; CopyMemory(dir, p, n); dir[n] = 0; }
+            p = slash + 1;
+        }
+    }
+    dot = ucrt_xp_strrchr(p, '.');
+    if (dot && dot != p) {
+        n = (size_t)(dot - p);
+        if (fname) { if (n > 255) n = 255; CopyMemory(fname, p, n); fname[n] = 0; }
+        if (ext) lstrcpynA(ext, dot, 256);
+    } else {
+        if (fname) lstrcpynA(fname, p, 256);
+    }
+}
+
+__declspec(dllexport) void __cdecl ucrt_xp_makepath(char *path, const char *drive, const char *dir, const char *fname, const char *ext)
+{
+    char *p;
+    if (!path) return;
+    p = path; *p = 0;
+    if (drive && drive[0]) {
+        *p++ = drive[0];
+        *p++ = ':';
+        *p = 0;
+    }
+    if (dir && dir[0]) {
+        lstrcatA(path, dir);
+        {
+            size_t L = ucrt_xp_strlen(path);
+            if (L && path[L-1] != '\\' && path[L-1] != '/')
+                lstrcatA(path, "\\");
+        }
+    }
+    if (fname) lstrcatA(path, fname);
+    if (ext && ext[0]) {
+        if (ext[0] != '.') lstrcatA(path, ".");
+        lstrcatA(path, ext[0] == '.' ? ext + 1 : ext);
+    }
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_rmdir(const char *path)
+{
+    if (!path) return -1;
+    return RemoveDirectoryA(path) ? 0 : -1;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_unlink(const char *path)
+{
+    if (!path) return -1;
+    return DeleteFileA(path) ? 0 : -1;
+}
+
+/* ------------------------------------------------------------------ */
+/* tmpnam / tmpfile                                                    */
+/* ------------------------------------------------------------------ */
+
+__declspec(dllexport) char* __cdecl ucrt_xp_tmpnam(char *s)
+{
+    static char static_buf[MAX_PATH];
+    static unsigned counter = 0;
+    char *out = s ? s : static_buf;
+    char tmpdir[MAX_PATH];
+    DWORD n = GetTempPathA(MAX_PATH, tmpdir);
+    if (n == 0 || n >= MAX_PATH) return NULL;
+    counter++;
+    wsprintfA(out, "%sucrt%x%x.tmp", tmpdir,
+              GetCurrentProcessId(), counter);
+    return out;
+}
+
+__declspec(dllexport) UCRT_XP_FILE* __cdecl ucrt_xp_tmpfile(void)
+{
+    char name[MAX_PATH];
+    UCRT_XP_FILE *f;
+    if (!ucrt_xp_tmpnam(name)) return NULL;
+    f = ucrt_xp_fopen(name, "w+b");
+    if (f) DeleteFileA(name); /* unlinked on close when possible; XP may keep until fclose */
+    return f;
+}

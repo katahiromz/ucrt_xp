@@ -1421,3 +1421,61 @@ __declspec(dllexport) int __cdecl ucrt_xp_wsystem(const wchar_t *command)
     CloseHandle(pi.hThread);
     return (int)code;
 }
+
+/* ------------------------------------------------------------------ */
+/* _wpopen / _wfindfirst family                                        */
+/* ------------------------------------------------------------------ */
+
+__declspec(dllexport) UCRT_XP_FILE* __cdecl ucrt_xp_wpopen(const wchar_t *command, const wchar_t *mode)
+{
+    char cmd_a[32768];
+    char mode_a[8];
+    if (!command || !mode) return NULL;
+    if (ucrt_xp_wide_to_ansi(command, cmd_a, (int)sizeof(cmd_a)) < 0) return NULL;
+    if (ucrt_xp_wide_to_ansi(mode, mode_a, (int)sizeof(mode_a)) < 0) return NULL;
+    return ucrt_xp_popen(cmd_a, mode_a);
+}
+
+typedef struct WFindCtx {
+    HANDLE h;
+    WIN32_FIND_DATAW fd;
+} WFindCtx;
+
+__declspec(dllexport) intptr_t __cdecl ucrt_xp_wfindfirst(const wchar_t *filespec, UCRT_XP_WFINDDATA *data)
+{
+    WFindCtx *ctx;
+    if (!filespec || !data) return -1;
+    ctx = (WFindCtx *)ucrt_xp_malloc(sizeof(WFindCtx));
+    if (!ctx) return -1;
+    ctx->h = FindFirstFileW(filespec, &ctx->fd);
+    if (ctx->h == INVALID_HANDLE_VALUE) {
+        ucrt_xp_free(ctx);
+        return -1;
+    }
+    lstrcpynW(data->name, ctx->fd.cFileName, 260);
+    data->attrib = ctx->fd.dwFileAttributes;
+    data->size = ((__int64)ctx->fd.nFileSizeHigh << 32) | ctx->fd.nFileSizeLow;
+    data->time_write = 0;
+    return (intptr_t)ctx;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_wfindnext(intptr_t handle, UCRT_XP_WFINDDATA *data)
+{
+    WFindCtx *ctx = (WFindCtx *)handle;
+    if (!ctx || !data || ctx->h == INVALID_HANDLE_VALUE) return -1;
+    if (!FindNextFileW(ctx->h, &ctx->fd)) return -1;
+    lstrcpynW(data->name, ctx->fd.cFileName, 260);
+    data->attrib = ctx->fd.dwFileAttributes;
+    data->size = ((__int64)ctx->fd.nFileSizeHigh << 32) | ctx->fd.nFileSizeLow;
+    data->time_write = 0;
+    return 0;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_wfindclose(intptr_t handle)
+{
+    WFindCtx *ctx = (WFindCtx *)handle;
+    if (!ctx) return -1;
+    if (ctx->h != INVALID_HANDLE_VALUE) FindClose(ctx->h);
+    ucrt_xp_free(ctx);
+    return 0;
+}

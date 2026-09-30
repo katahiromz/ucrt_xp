@@ -206,3 +206,57 @@ __declspec(dllexport) int __cdecl ucrt_xp_iswcsym(wint_t c)
 {
     return ucrt_xp_iswalnum(c) || c == L'_';
 }
+
+/* ------------------------------------------------------------------ */
+/* wctype / iswctype (bitmask classifiers)                             */
+/* ------------------------------------------------------------------ */
+
+/* Bit flags matching common MSVC <wctype.h> layout closely enough for
+ * portable checks (values are stable for this library). */
+#define UCRT_XP_WCT_ALNUM  0x0001
+#define UCRT_XP_WCT_ALPHA  0x0002
+#define UCRT_XP_WCT_CNTRL  0x0004
+#define UCRT_XP_WCT_DIGIT  0x0008
+#define UCRT_XP_WCT_GRAPH  0x0010
+#define UCRT_XP_WCT_LOWER  0x0020
+#define UCRT_XP_WCT_PRINT  0x0040
+#define UCRT_XP_WCT_PUNCT  0x0080
+#define UCRT_XP_WCT_SPACE  0x0100
+#define UCRT_XP_WCT_UPPER  0x0200
+#define UCRT_XP_WCT_XDIGIT 0x0400
+
+typedef unsigned short ucrt_xp_wctype_t;
+
+__declspec(dllexport) ucrt_xp_wctype_t __cdecl ucrt_xp_wctype(const char *property)
+{
+    if (!property) return 0;
+    if (ucrt_xp_strcmp(property, "alnum")  == 0) return UCRT_XP_WCT_ALNUM;
+    if (ucrt_xp_strcmp(property, "alpha")  == 0) return UCRT_XP_WCT_ALPHA;
+    if (ucrt_xp_strcmp(property, "cntrl")  == 0) return UCRT_XP_WCT_CNTRL;
+    if (ucrt_xp_strcmp(property, "digit")  == 0) return UCRT_XP_WCT_DIGIT;
+    if (ucrt_xp_strcmp(property, "graph")  == 0) return UCRT_XP_WCT_GRAPH;
+    if (ucrt_xp_strcmp(property, "lower")  == 0) return UCRT_XP_WCT_LOWER;
+    if (ucrt_xp_strcmp(property, "print")  == 0) return UCRT_XP_WCT_PRINT;
+    if (ucrt_xp_strcmp(property, "punct")  == 0) return UCRT_XP_WCT_PUNCT;
+    if (ucrt_xp_strcmp(property, "space")  == 0) return UCRT_XP_WCT_SPACE;
+    if (ucrt_xp_strcmp(property, "upper")  == 0) return UCRT_XP_WCT_UPPER;
+    if (ucrt_xp_strcmp(property, "xdigit") == 0) return UCRT_XP_WCT_XDIGIT;
+    return 0;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_iswctype(wint_t c, ucrt_xp_wctype_t desc)
+{
+    unsigned short m = 0;
+    if (ucrt_xp_iswalnum(c))  m |= UCRT_XP_WCT_ALNUM;
+    if (ucrt_xp_iswalpha(c))  m |= UCRT_XP_WCT_ALPHA;
+    if (ucrt_xp_iswcntrl(c))  m |= UCRT_XP_WCT_CNTRL;
+    if (ucrt_xp_iswdigit(c))  m |= UCRT_XP_WCT_DIGIT;
+    if (ucrt_xp_iswgraph(c))  m |= UCRT_XP_WCT_GRAPH;
+    if (ucrt_xp_iswlower(c))  m |= UCRT_XP_WCT_LOWER;
+    if (ucrt_xp_iswprint(c))  m |= UCRT_XP_WCT_PRINT;
+    if (ucrt_xp_iswpunct(c))  m |= UCRT_XP_WCT_PUNCT;
+    if (ucrt_xp_iswspace(c))  m |= UCRT_XP_WCT_SPACE;
+    if (ucrt_xp_iswupper(c))  m |= UCRT_XP_WCT_UPPER;
+    if (ucrt_xp_iswxdigit(c)) m |= UCRT_XP_WCT_XDIGIT;
+    return (m & desc) != 0;
+}

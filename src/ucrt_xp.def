@@ -317,3 +317,45 @@ EXPORTS
     ucrt_xp_findfirst                      @344
     ucrt_xp_findnext                       @345
     ucrt_xp_findclose                      @346
+
+    ucrt_xp_dup                            @347
+    ucrt_xp_dup2                           @348
+    ucrt_xp_setmode                        @349
+    ucrt_xp_commit                         @350
+    ucrt_xp_get_osfhandle                  @351
+    ucrt_xp_open_osfhandle                 @352
+    ucrt_xp_eof                            @353
+    ucrt_xp_lseeki64                       @354
+    ucrt_xp_telli64                        @355
+    ucrt_xp_tell                           @356
+    ucrt_xp_fgetpos                        @357
+    ucrt_xp_fsetpos                        @358
+    ucrt_xp_tmpnam                         @359
+    ucrt_xp_tmpfile                        @360
+    ucrt_xp_fullpath                       @361
+    ucrt_xp_splitpath                      @362
+    ucrt_xp_makepath                       @363
+    ucrt_xp_rmdir                          @364
+    ucrt_xp_unlink                         @365
+    ucrt_xp_setlocale                      @366
+    ucrt_xp_localeconv                     @367
+    ucrt_xp_atoll                          @368
+    ucrt_xp_atoi64                         @369
+    ucrt_xp_i64toa                         @370
+    ucrt_xp_ui64toa                        @371
+    ucrt_xp_div                            @372
+    ucrt_xp_ldiv                           @373
+    ucrt_xp_llabs                          @374
+    ucrt_xp_mblen                          @375
+    ucrt_xp_mbtowc                         @376
+    ucrt_xp_wctomb                         @377
+    ucrt_xp_mbstowcs                       @378
+    ucrt_xp_wcstombs                       @379
+    ucrt_xp_wpopen                         @380
+    ucrt_xp_wfindfirst                     @381
+    ucrt_xp_wfindnext                      @382
+    ucrt_xp_wfindclose                     @383
+
+    ucrt_xp_assert                         @384
+    ucrt_xp_wctype                         @385
+    ucrt_xp_iswctype                       @386

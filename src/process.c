@@ -881,3 +881,20 @@ __declspec(dllexport) void __cdecl ucrt_xp_endthreadex(unsigned retval)
     ExitThread(retval);
 }
 
+
+/* ------------------------------------------------------------------ */
+/* assert                                                              */
+/* ------------------------------------------------------------------ */
+
+__declspec(dllexport) void __cdecl ucrt_xp_assert(const char *expr, const char *file, unsigned line)
+{
+    char buf[1024];
+    wsprintfA(buf,
+              "Assertion failed: %s\nFile: %s\nLine: %u\n",
+              expr ? expr : "(null)",
+              file ? file : "(null)",
+              line);
+    OutputDebugStringA(buf);
+    MessageBoxA(NULL, buf, "ucrt_xp assert", MB_OK | MB_ICONERROR);
+    ucrt_xp_abort();
+}

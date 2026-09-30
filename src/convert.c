@@ -572,3 +572,132 @@ __declspec(dllexport) int __cdecl ucrt_xp_dupenv_s(char **buffer, size_t *number
     if (numberOfElements) *numberOfElements = len;
     return 0;
 }
+
+/* ------------------------------------------------------------------ */
+/* atoll / _atoi64 / _i64toa / _ui64toa / div / ldiv / llabs           */
+/* ------------------------------------------------------------------ */
+
+__declspec(dllexport) __int64 __cdecl ucrt_xp_atoll(const char *s)
+{
+    return ucrt_xp_strtoll(s, NULL, 10);
+}
+
+__declspec(dllexport) __int64 __cdecl ucrt_xp_atoi64(const char *s)
+{
+    return ucrt_xp_strtoll(s, NULL, 10);
+}
+
+static char *i64toa_unsigned(unsigned __int64 value, char *str, int radix, int is_neg)
+{
+    char tmp[72];
+    int i = 0, j = 0;
+    const char *digits = "0123456789abcdefghijklmnopqrstuvwxyz";
+    if (!str || radix < 2 || radix > 36) return NULL;
+    if (value == 0) { str[0] = '0'; str[1] = 0; return str; }
+    while (value) {
+        tmp[i++] = digits[value % (unsigned)radix];
+        value /= (unsigned)radix;
+    }
+    if (is_neg && radix == 10) tmp[i++] = '-';
+    while (i > 0) str[j++] = tmp[--i];
+    str[j] = 0;
+    return str;
+}
+
+__declspec(dllexport) char* __cdecl ucrt_xp_i64toa(__int64 value, char *str, int radix)
+{
+    if (value < 0 && radix == 10)
+        return i64toa_unsigned((unsigned __int64)(-value), str, radix, 1);
+    return i64toa_unsigned((unsigned __int64)value, str, radix, 0);
+}
+
+__declspec(dllexport) char* __cdecl ucrt_xp_ui64toa(unsigned __int64 value, char *str, int radix)
+{
+    return i64toa_unsigned(value, str, radix, 0);
+}
+
+typedef struct UCRT_XP_DIV_T { int quot; int rem; } UCRT_XP_DIV_T;
+typedef struct UCRT_XP_LDIV_T { long quot; long rem; } UCRT_XP_LDIV_T;
+
+__declspec(dllexport) UCRT_XP_DIV_T __cdecl ucrt_xp_div(int numer, int denom)
+{
+    UCRT_XP_DIV_T r;
+    r.quot = (denom == 0) ? 0 : numer / denom;
+    r.rem  = (denom == 0) ? 0 : numer % denom;
+    return r;
+}
+
+__declspec(dllexport) UCRT_XP_LDIV_T __cdecl ucrt_xp_ldiv(long numer, long denom)
+{
+    UCRT_XP_LDIV_T r;
+    r.quot = (denom == 0) ? 0 : numer / denom;
+    r.rem  = (denom == 0) ? 0 : numer % denom;
+    return r;
+}
+
+__declspec(dllexport) __int64 __cdecl ucrt_xp_llabs(__int64 v)
+{
+    return v < 0 ? -v : v;
+}
+
+/* ------------------------------------------------------------------ */
+/* Multibyte / wide conversion (CP_ACP)                                */
+/* ------------------------------------------------------------------ */
+
+__declspec(dllexport) int __cdecl ucrt_xp_mblen(const char *s, size_t n)
+{
+    if (!s || n == 0) return 0;
+    if (*s == 0) return 0;
+    /* CP_ACP: treat as single-byte for "C"/system ANSI; DBCS lead byte = 2 */
+    if (IsDBCSLeadByte((BYTE)*s))
+        return (n >= 2 && s[1]) ? 2 : -1;
+    return 1;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_mbtowc(wchar_t *pwc, const char *s, size_t n)
+{
+    int len;
+    wchar_t w;
+    if (!s || n == 0) return 0;
+    if (*s == 0) { if (pwc) *pwc = 0; return 0; }
+    len = ucrt_xp_mblen(s, n);
+    if (len <= 0) return -1;
+    if (MultiByteToWideChar(CP_ACP, 0, s, len, &w, 1) != 1) return -1;
+    if (pwc) *pwc = w;
+    return len;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_wctomb(char *s, wchar_t wc)
+{
+    char buf[4];
+    int n = WideCharToMultiByte(CP_ACP, 0, &wc, 1, buf, 4, NULL, NULL);
+    if (n <= 0) return -1;
+    if (s) CopyMemory(s, buf, (size_t)n);
+    return n;
+}
+
+__declspec(dllexport) size_t __cdecl ucrt_xp_mbstowcs(wchar_t *wcstr, const char *mbstr, size_t count)
+{
+    int n;
+    if (!mbstr) return (size_t)-1;
+    if (!wcstr || count == 0) {
+        n = MultiByteToWideChar(CP_ACP, 0, mbstr, -1, NULL, 0);
+        return n > 0 ? (size_t)(n - 1) : (size_t)-1;
+    }
+    n = MultiByteToWideChar(CP_ACP, 0, mbstr, -1, wcstr, (int)count);
+    if (n <= 0) return (size_t)-1;
+    return (size_t)(n - 1);
+}
+
+__declspec(dllexport) size_t __cdecl ucrt_xp_wcstombs(char *mbstr, const wchar_t *wcstr, size_t count)
+{
+    int n;
+    if (!wcstr) return (size_t)-1;
+    if (!mbstr || count == 0) {
+        n = WideCharToMultiByte(CP_ACP, 0, wcstr, -1, NULL, 0, NULL, NULL);
+        return n > 0 ? (size_t)(n - 1) : (size_t)-1;
+    }
+    n = WideCharToMultiByte(CP_ACP, 0, wcstr, -1, mbstr, (int)count, NULL, NULL);
+    if (n <= 0) return (size_t)-1;
+    return (size_t)(n - 1);
+}
