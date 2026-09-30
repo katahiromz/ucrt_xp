@@ -1,122 +1,61 @@
 /*
- * condvar.c - condition variable substitute for XP, which has no
- * CONDITION_VARIABLE (that's Vista+). This is the well-known
- * "SetEvent + Semaphore" implementation (the same algorithm used by
- * pthreads-win32 / the classic Schmidt & Pyarali paper), adapted to
- * ucrt_xp's naming and error-handling conventions.
+ * condvar.c - legacy init/destroy-style condition variable API.
  *
- * Supports both signal (wake one) and broadcast (wake all), and is
- * correct in the presence of spurious/lost wakeups because callers are
- * expected to re-check their predicate in a loop, per standard condvar
- * usage.
+ * These five functions are part of the shipped ABI, so they stay, but
+ * they no longer contain an implementation of their own: each one
+ * forwards to the Vista-style functions in sync.c. That means they get
+ * the same behavior as everything else:
+ *
+ *   - On Vista+ the operating system's CONDITION_VARIABLE does the work.
+ *   - On XP, sync.c's per-waiter event queue does.
+ *
+ * (An earlier version of this file emulated condition variables with a
+ * semaphore + event pair. That scheme cannot aim a wakeup at a specific
+ * waiter, so a thread arriving late could consume a wakeup meant for one
+ * that was already waiting, and its comment claimed the lock release and
+ * the block were atomic when they are not. It was removed rather than
+ * kept as the XP fallback for those reasons.)
+ *
+ * The struct layout of UCRT_XP_COND is unchanged (ABI rule 1); only its
+ * first pointer-sized field is used, as the condition-variable slot.
  */
 #include "internal.h"
-#include <assert.h>
 
 __declspec(dllexport) BOOL __cdecl ucrt_xp_cond_init(UCRT_XP_COND *cv)
 {
     if (!cv) return FALSE;
-
-    cv->waiters_count = 0;
-    cv->was_broadcast = 0;
-
-    cv->sema = CreateSemaphoreA(NULL, 0, 0x7fffffff, NULL);
-    if (!cv->sema) {
-        assert(0);
-        return FALSE;
-    }
-
-    cv->waiters_done = CreateEventA(NULL, /*manual reset*/FALSE, FALSE, NULL);
-    if (!cv->waiters_done) {
-        assert(0);
-        CloseHandle(cv->sema);
-        cv->sema = NULL;
-        return FALSE;
-    }
-
-    InitializeCriticalSection(&cv->waiters_lock);
+    ZeroMemory(cv, sizeof(*cv));
+    ucrt_xp_InitializeConditionVariable((UCRT_XP_CONDITION_VARIABLE *)cv);
     return TRUE;
 }
 
 __declspec(dllexport) void __cdecl ucrt_xp_cond_destroy(UCRT_XP_COND *cv)
 {
-    if (!cv) return;
-    if (cv->sema) { CloseHandle(cv->sema); cv->sema = NULL; }
-    if (cv->waiters_done) { CloseHandle(cv->waiters_done); cv->waiters_done = NULL; }
-    DeleteCriticalSection(&cv->waiters_lock);
+    /* Nothing to release: no kernel objects are created any more, and
+     * the native CONDITION_VARIABLE has no destructor either. Destroying
+     * an object that still has waiters is a caller bug, as before. */
+    (void)cv;
 }
 
 __declspec(dllexport) BOOL __cdecl ucrt_xp_cond_wait(
     UCRT_XP_COND *cv, CRITICAL_SECTION *external_lock, DWORD timeout_ms)
 {
-    BOOL last_waiter;
-    DWORD wait_result;
-
-    if (!cv || !external_lock) return FALSE;
-
-    EnterCriticalSection(&cv->waiters_lock);
-    cv->waiters_count++;
-    LeaveCriticalSection(&cv->waiters_lock);
-
-    /* Atomically release caller's lock and block on the semaphore. This
-     * mirrors condvar semantics: the external mutex is only released once
-     * we are actually queued to be woken. */
-    LeaveCriticalSection(external_lock);
-    wait_result = WaitForSingleObject(cv->sema, timeout_ms);
-
-    EnterCriticalSection(&cv->waiters_lock);
-    cv->waiters_count--;
-    last_waiter = cv->was_broadcast && (cv->waiters_count == 0);
-    LeaveCriticalSection(&cv->waiters_lock);
-
-    if (last_waiter) {
-        /* Tell the broadcasting thread that all waiters have drained the
-         * semaphore, so it's safe for it to return from broadcast(). */
-        SetEvent(cv->waiters_done);
+    if (!cv) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
     }
-
-    EnterCriticalSection(external_lock);
-
-    return (wait_result == WAIT_OBJECT_0);
+    return ucrt_xp_SleepConditionVariableCS(
+        (UCRT_XP_CONDITION_VARIABLE *)cv, external_lock, timeout_ms);
 }
 
 __declspec(dllexport) void __cdecl ucrt_xp_cond_signal(UCRT_XP_COND *cv)
 {
-    BOOL have_waiters;
     if (!cv) return;
-
-    EnterCriticalSection(&cv->waiters_lock);
-    have_waiters = (cv->waiters_count > 0);
-    LeaveCriticalSection(&cv->waiters_lock);
-
-    if (have_waiters) {
-        ReleaseSemaphore(cv->sema, 1, NULL);
-    }
+    ucrt_xp_WakeConditionVariable((UCRT_XP_CONDITION_VARIABLE *)cv);
 }
 
 __declspec(dllexport) void __cdecl ucrt_xp_cond_broadcast(UCRT_XP_COND *cv)
 {
-    BOOL have_waiters;
     if (!cv) return;
-
-    EnterCriticalSection(&cv->waiters_lock);
-    have_waiters = FALSE;
-    if (cv->waiters_count > 0) {
-        cv->was_broadcast = 1;
-        have_waiters = TRUE;
-    }
-
-    if (have_waiters) {
-        ReleaseSemaphore(cv->sema, cv->waiters_count, NULL);
-        LeaveCriticalSection(&cv->waiters_lock);
-
-        /* Wait for every released waiter to actually wake up and decrement
-         * waiters_count before clearing was_broadcast, otherwise a fast
-         * subsequent wait() could observe was_broadcast==1 from the
-         * previous round. */
-        WaitForSingleObject(cv->waiters_done, INFINITE);
-        cv->was_broadcast = 0;
-    } else {
-        LeaveCriticalSection(&cv->waiters_lock);
-    }
+    ucrt_xp_WakeAllConditionVariable((UCRT_XP_CONDITION_VARIABLE *)cv);
 }

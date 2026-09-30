@@ -108,6 +108,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
         ucrt_xp_heap_thread_cleanup();
         break;
     case DLL_PROCESS_DETACH:
+        ucrt_xp__sync_cleanup();
         ucrt_xp_heap_thread_cleanup();
         if (g_ucrt_xp_heap) {
             HeapDestroy(g_ucrt_xp_heap);

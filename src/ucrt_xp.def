@@ -191,3 +191,11 @@ EXPORTS
     ucrt_xp_vfwscanf              @225
     ucrt_xp_fwscanf               @226
     ucrt_xp_wscanf                @227
+
+    ucrt_xp_sync_is_native               @228
+    ucrt_xp_InitializeConditionVariable  @229
+    ucrt_xp_SleepConditionVariableCS     @230
+    ucrt_xp_WakeConditionVariable        @231
+    ucrt_xp_WakeAllConditionVariable     @232
+    ucrt_xp_InitOnceInitialize           @233
+    ucrt_xp_InitOnceExecuteOnce          @234

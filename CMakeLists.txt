@@ -17,6 +17,7 @@ set(UCRT_XP_SOURCES
     src/init.c
     src/once.c
     src/condvar.c
+    src/sync.c
     src/heap.c
     src/locale.c
     src/exception.c
@@ -58,3 +59,7 @@ enable_testing()
 add_executable(ucrt_xp_tests tests/test_basic.c)
 target_link_libraries(ucrt_xp_tests ucrt_xp_static)
 add_test(NAME basic COMMAND ucrt_xp_tests)
+
+add_executable(ucrt_xp_sync_tests tests/test_sync.c)
+target_link_libraries(ucrt_xp_sync_tests ucrt_xp_static)
+add_test(NAME sync COMMAND ucrt_xp_sync_tests)

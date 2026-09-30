@@ -11,8 +11,9 @@ XP at all:
 | Module | File | Replaces / provides |
 |---|---|---|
 | ABI negotiation | `src/init.c` | Hard-fails on version mismatch instead of silently corrupting state |
-| One-time init | `src/once.c` | `InitOnceExecuteOnce` (XP SP2+ only) → works on XP RTM too |
-| Condition variable | `src/condvar.c` | `CONDITION_VARIABLE` (Vista+ only) |
+| Vista-style sync | `src/sync.c` | `CONDITION_VARIABLE` / `InitOnceExecuteOnce` shapes (Vista+ APIs) that use the OS's own implementation where present and a built-in one on XP — see "Vista-style synchronization" below |
+| One-time init (legacy) | `src/once.c` | Poll-based once, needs no OS support at all (`InitOnceExecuteOnce` is Vista+, it does not exist on any XP) |
+| Condition variable (legacy) | `src/condvar.c` | `init`/`destroy`-style wrappers over the Vista-style API above |
 | Heap | `src/heap.c` | `malloc`/`free` with LFH + per-thread small-object cache |
 | Locale | `src/locale.c` | Thread-local, refcounted, immutable locale objects; `LC_NUMERIC`/`LC_MONETARY`-style fields, `_stricmp` + `stricmp_l`, `toupper_l`/`tolower_l`, and a static name→LCID table (XP has no `LocaleNameToLCID`, that's Vista+) |
 | Exception trampoline | `src/exception.c` | Shared last-chance SEH filter, per-thread `_set_se_translator`-style hook, and `ucrt_xp_guarded_call()` fault-containment primitive |
@@ -96,6 +97,59 @@ happens to start with — a strict downgrade, not an improvement, and
 inconsistent with the "never guess, always verify" philosophy behind
 `ucrt_xp_init()`'s own ABI check.
 
+## Vista-style synchronization (ABI 1.1)
+
+`CONDITION_VARIABLE`, `SleepConditionVariableCS`, `WakeConditionVariable`,
+`WakeAllConditionVariable` and `InitOnceExecuteOnce` all arrived with Windows
+Vista; none exists on XP. ucrt_xp offers the same shapes so Vista-style code
+ports by renaming - or without even that (see the compat header below):
+
+```c
+static UCRT_XP_CONDITION_VARIABLE cv = UCRT_XP_CONDITION_VARIABLE_INIT; /* no init/destroy calls */
+static CRITICAL_SECTION cs;
+
+EnterCriticalSection(&cs);
+while (!ready)
+    ucrt_xp_SleepConditionVariableCS(&cv, &cs, INFINITE);   /* FALSE + ERROR_TIMEOUT on timeout */
+LeaveCriticalSection(&cs);
+/* elsewhere:  ucrt_xp_WakeConditionVariable(&cv);  /  ucrt_xp_WakeAllConditionVariable(&cv); */
+
+static UCRT_XP_INIT_ONCE once = UCRT_XP_INIT_ONCE_STATIC_INIT;
+static BOOL WINAPI init_fn(UCRT_XP_INIT_ONCE *o, PVOID param, PVOID *ctx) { /* ... */ return TRUE; }
+ucrt_xp_InitOnceExecuteOnce(&once, init_fn, NULL, &ctx);
+```
+
+Or, with the optional compat header, write the Vista names verbatim:
+
+```c
+#define UCRT_XP_USE_VISTA_NAMES
+#include "ucrt_xp_compat.h"
+static CONDITION_VARIABLE cv = CONDITION_VARIABLE_INIT;
+SleepConditionVariableCS(&cv, &cs, INFINITE);
+```
+
+**Runtime dispatch.** On first use the runtime looks the five APIs up in
+`kernel32.dll` with `GetProcAddress`. If all are present (Vista and later, and
+Wine) every call is forwarded to the OS. Otherwise (XP) a built-in
+implementation with the same semantics is used. The choice is made once per
+process; `ucrt_xp_sync_is_native()` reports which one you got.
+
+**The XP implementation** gives each waiter its own event and a place in a FIFO
+queue, so a wakeup is aimed at one specific waiter and a thread that starts
+waiting later cannot steal it. A waiter that times out removes itself under the
+same lock the waker uses, so "timed out" and "was woken" are decided exactly
+once. All fallback objects share one process-wide leaf lock; that is what lets
+a zero-filled object be valid with no per-object setup.
+
+**Not provided:** `SleepConditionVariableSRW` (SRW locks do not exist on XP) and
+`InitOnceBeginInitialize`/`InitOnceComplete`. As with the native API: re-check
+your predicate in a loop (wakeups may be spurious), hold the CS exactly once
+while waiting, and never initialize the same once-object from inside its own
+initializer. The callback is `WINAPI` (`__stdcall`), matching the native type.
+
+The legacy `ucrt_xp_cond_*` functions are unchanged in signature and struct
+layout but now simply forward to this API, so they get the same behavior.
+
 ## Layout
 
 ```
@@ -109,6 +163,7 @@ ucrt_xp/
 │   ├── init.c
 │   ├── once.c
 │   ├── condvar.c
+│   ├── sync.c
 │   ├── heap.c
 │   ├── locale.c
 │   ├── exception.c
@@ -125,6 +180,7 @@ ucrt_xp/
 │   ├── hello.c          # autostart + compat header
 │   └── hello.cpp        # RAII wrappers
 ├── tests/test_basic.c
+├── tests/test_sync.c
 └── CMakeLists.txt
 ```
 
@@ -289,6 +345,21 @@ See "Scope" above for the principled exclusions (`math.h` transcendentals,
   to set `errno` the way the classic CRT's `malloc` does.
 
 ## Verification status
+
+**Sync layer (added in ABI 1.1): executed under Wine 9.0, not on a real XP
+machine.** `tests/test_sync.c` runs every test twice - once with whatever the
+OS provides (Wine's native implementation) and once with the XP fallback forced
+on - covering: static initialization, timeout semantics (`ERROR_TIMEOUT`, lock
+re-held), Wake-one vs WakeAll counts, a 4-producer/4-consumer bounded queue
+using single-wake only (20,000 items, none lost), 6,000 timed waits racing
+wakes (both outcomes occur), and `InitOnceExecuteOnce` (8 racers, context
+propagation, failure-then-retry, argument checks). It also builds and runs as
+a DLL client. Wine's kernel32 is not XP's, so the fallback's behavior on real
+XP is still unconfirmed - the fallback uses only APIs present on XP RTM
+(`CreateEvent`, `WaitForSingleObject`, `CRITICAL_SECTION`, `GetProcAddress`),
+but run `tests/test_sync.c` on a real XP box before shipping.
+
+**Everything else below** predates the sync layer and is unchanged:
 
 Every `.c` file in `src/` cross-compiles cleanly (0 errors; only benign
 `#pragma warning`/unused-flag notices) against real Win32 headers via

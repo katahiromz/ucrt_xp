@@ -32,7 +32,7 @@ extern "C" {
  * changes (new functions appended at the end of this header).
  */
 #define UCRT_XP_ABI_MAJOR 1
-#define UCRT_XP_ABI_MINOR 0
+#define UCRT_XP_ABI_MINOR 1   /* 1: added Vista-style sync API (see end of file) */
 #define UCRT_XP_ABI_VERSION ((UCRT_XP_ABI_MAJOR << 16) | UCRT_XP_ABI_MINOR)
 
 typedef struct UCRT_XP_VERSION_INFO {
@@ -105,7 +105,14 @@ static void ucrt_xp__autostart_ctor(void)
 #endif /* UCRT_XP_IMPLEMENT_AUTOSTART */
 
 /* ------------------------------------------------------------------ */
-/* One-time initialization (InitOnceExecuteOnce substitute)            */
+/* One-time initialization - legacy API                                 */
+/*                                                                      */
+/* Needs no OS support at all (just Interlocked ops), so it works on    */
+/* every XP. InitOnceExecuteOnce itself is Vista+; for an API shaped    */
+/* like that one, see ucrt_xp_InitOnceExecuteOnce at the end of this    */
+/* file, which also uses the OS version automatically where it exists.  */
+/* Waiters poll (Sleep) rather than block; for long initializers or     */
+/* many waiters prefer the Vista-style API.                             */
 /* ------------------------------------------------------------------ */
 
 typedef struct UCRT_XP_ONCE {
@@ -122,15 +129,23 @@ __declspec(dllexport) BOOL __cdecl ucrt_xp_once(
     void *param);
 
 /* ------------------------------------------------------------------ */
-/* Condition variable substitute (CONDITION_VARIABLE is Vista+ only)   */
+/* Condition variable - legacy API (init/destroy style)                 */
+/*                                                                      */
+/* Kept for source/binary compatibility. It is now a thin wrapper over  */
+/* the Vista-style API at the end of this file, so it gets the same     */
+/* native-when-available dispatch and the same fallback. Only the first */
+/* pointer-sized field is used; the rest of the struct is retained      */
+/* purely so its size and layout (ABI rule 1) do not change. init makes */
+/* no kernel objects and destroy releases nothing, but keep calling     */
+/* both: nothing here promises they will stay no-ops.                   */
 /* ------------------------------------------------------------------ */
 
 typedef struct UCRT_XP_COND {
-    HANDLE sema;                 /* counts waiters that were signaled */
-    HANDLE waiters_done;         /* manual-reset event: broadcast done */
-    CRITICAL_SECTION waiters_lock;
-    LONG waiters_count;
-    LONG was_broadcast;
+    HANDLE sema;                 /* now: the condition-variable slot (see above) */
+    HANDLE waiters_done;         /* unused, layout only */
+    CRITICAL_SECTION waiters_lock; /* unused, layout only */
+    LONG waiters_count;          /* unused, layout only */
+    LONG was_broadcast;          /* unused, layout only */
 } UCRT_XP_COND;
 
 __declspec(dllexport) BOOL __cdecl ucrt_xp_cond_init(UCRT_XP_COND *cv);
@@ -540,6 +555,68 @@ __declspec(dllexport) BOOL __cdecl ucrt_xp_localtime(const UCRT_XP_TIME_T *timer
 __declspec(dllexport) int  __cdecl ucrt_xp_compute_yday(int year, int mon0, int mday);
 __declspec(dllexport) size_t __cdecl ucrt_xp_strftime(
     char *buf, size_t bufsize, const char *fmt, const UCRT_XP_TM *tm);
+
+/* ------------------------------------------------------------------ */
+/* Vista-style synchronization (ABI 1.1)                               */
+/*                                                                      */
+/* Same shapes as CONDITION_VARIABLE / InitOnceExecuteOnce, usable on   */
+/* every XP. At first use the runtime looks the real APIs up in         */
+/* kernel32 (Vista+): if present they are used as-is; if not, a         */
+/* built-in implementation with the same semantics takes over. The     */
+/* choice is made once per process. Use ucrt_xp_sync_is_native() to    */
+/* see which one you got (diagnostics/tests only - code should not      */
+/* need to care).                                                       */
+/*                                                                      */
+/* Differences from the native API you should know about:               */
+/*   - Only the CRITICAL_SECTION flavor of Sleep exists. There is no    */
+/*     SleepConditionVariableSRW: SRW locks do not exist on XP.         */
+/*   - InitOnceBeginInitialize/Complete (the async form) is not         */
+/*     provided; use InitOnceExecuteOnce.                               */
+/*   - Like native: a wait may wake spuriously, so always re-check     */
+/*     your predicate in a loop; the CS must be held exactly once      */
+/*     when waiting (a recursive hold is released only once); an        */
+/*     initializer must not recursively initialize the same object.    */
+/*   - The callback is __stdcall (WINAPI), as in the native API.        */
+/* ------------------------------------------------------------------ */
+
+typedef struct UCRT_XP_CONDITION_VARIABLE { PVOID Ptr; } UCRT_XP_CONDITION_VARIABLE;
+#define UCRT_XP_CONDITION_VARIABLE_INIT { 0 }
+
+typedef struct UCRT_XP_INIT_ONCE { PVOID Ptr; } UCRT_XP_INIT_ONCE;
+#define UCRT_XP_INIT_ONCE_STATIC_INIT { 0 }
+
+/* Return TRUE on success. Store an optional context in *context; its low
+ * two bits must be zero (e.g. a pointer). Return FALSE to leave the
+ * object uninitialized so a later call can retry. */
+typedef BOOL (WINAPI *UCRT_XP_INIT_ONCE_FN)(
+    UCRT_XP_INIT_ONCE *once, PVOID param, PVOID *context);
+
+/* TRUE if the OS's own implementation is in use (Vista+). */
+__declspec(dllexport) BOOL __cdecl ucrt_xp_sync_is_native(void);
+
+/* Optional: a zero-filled / _INIT-initialized object is already valid. */
+__declspec(dllexport) void __cdecl ucrt_xp_InitializeConditionVariable(
+    UCRT_XP_CONDITION_VARIABLE *cv);
+
+/* Caller holds *cs. Releases it, blocks, re-acquires it before returning
+ * (on every path). TRUE = woken; FALSE = timeout (GetLastError() ==
+ * ERROR_TIMEOUT) or failure. */
+__declspec(dllexport) BOOL __cdecl ucrt_xp_SleepConditionVariableCS(
+    UCRT_XP_CONDITION_VARIABLE *cv, CRITICAL_SECTION *cs, DWORD timeout_ms);
+
+__declspec(dllexport) void __cdecl ucrt_xp_WakeConditionVariable(
+    UCRT_XP_CONDITION_VARIABLE *cv);
+__declspec(dllexport) void __cdecl ucrt_xp_WakeAllConditionVariable(
+    UCRT_XP_CONDITION_VARIABLE *cv);
+
+__declspec(dllexport) void __cdecl ucrt_xp_InitOnceInitialize(
+    UCRT_XP_INIT_ONCE *once);
+
+/* Runs fn exactly once across all threads; concurrent callers block
+ * until it finishes. Returns TRUE if the object is initialized when the
+ * call returns (context receives the stored value, if non-NULL). */
+__declspec(dllexport) BOOL __cdecl ucrt_xp_InitOnceExecuteOnce(
+    UCRT_XP_INIT_ONCE *once, UCRT_XP_INIT_ONCE_FN fn, PVOID param, PVOID *context);
 
 #ifdef __cplusplus
 }

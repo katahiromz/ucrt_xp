@@ -1,7 +1,12 @@
 /*
- * once.c - one-time initialization without relying on InitOnceExecuteOnce,
- * which only exists on XP SP2+ / Vista+. This implementation works on
- * XP RTM too, using nothing but InterlockedCompareExchange + Sleep.
+ * once.c - legacy one-time initialization. InitOnceExecuteOnce is a
+ * Vista+ API (it does not exist on any XP service pack), so this version
+ * uses nothing but InterlockedCompareExchange + Sleep and therefore runs
+ * on every XP, RTM included.
+ *
+ * Waiters poll instead of blocking, which is fine for short initializers
+ * but wasteful for long ones. For a blocking implementation with the
+ * native callback shape, use ucrt_xp_InitOnceExecuteOnce (sync.c).
  *
  * State machine per UCRT_XP_ONCE.state:
  *   0 = not started
@@ -40,8 +45,18 @@ __declspec(dllexport) BOOL __cdecl ucrt_xp_once(
      * a single LONG (cheap to embed in any struct, no handle lifetime to
      * manage). Contention on a one-time-init path is expected to be rare
      * and short-lived. */
-    while (once->state == ONCE_RUNNING) {
-        Sleep(0);
+    {
+        /* Sleep(0) only yields to threads of equal or higher priority, so
+         * if the initializing thread has LOWER priority, spinning on it
+         * alone can starve it. After a short burst, sleep for real. */
+        int spins = 0;
+        while (once->state == ONCE_RUNNING) {
+            if (++spins < 64) {
+                Sleep(0);
+            } else {
+                Sleep(1);
+            }
+        }
     }
     return (once->state == ONCE_DONE);
 }

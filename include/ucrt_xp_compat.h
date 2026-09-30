@@ -38,8 +38,12 @@
  *      behavioral differences from the real CRT (e.g. text-mode CRLF
  *      handling, the printf conversion subset).
  *
- * Without UCRT_XP_USE_STD_NAMES defined, including this header is a
- * no-op beyond pulling in ucrt_xp.h - safe to include unconditionally.
+ * A second, independent switch, UCRT_XP_USE_VISTA_NAMES, gives Vista's
+ * CONDITION_VARIABLE / InitOnceExecuteOnce family - see the section near
+ * the end of this file.
+ *
+ * Without either switch defined, including this header is a no-op beyond
+ * pulling in ucrt_xp.h - safe to include unconditionally.
  */
 #ifndef UCRT_XP_COMPAT_H
 #define UCRT_XP_COMPAT_H
@@ -233,5 +237,52 @@
 #define _wcsicmp(a, b)            ucrt_xp_wcsicmp(a, b)
 
 #endif /* UCRT_XP_USE_STD_NAMES */
+
+/* ------------------------------------------------------------------ */
+/* Vista-era synchronization names (separate, opt-in switch)           */
+/*                                                                     */
+/*     #define UCRT_XP_USE_VISTA_NAMES                                 */
+/*     #include "ucrt_xp_compat.h"                                     */
+/*                                                                     */
+/*     static CONDITION_VARIABLE cv = CONDITION_VARIABLE_INIT;         */
+/*     SleepConditionVariableCS(&cv, &cs, INFINITE);                   */
+/*     InitOnceExecuteOnce(&once, MyInitFn, NULL, NULL);               */
+/*                                                                     */
+/* Code written for Vista+ then builds unchanged and runs on XP: the   */
+/* OS implementation is used where it exists, ucrt_xp's otherwise.     */
+/*                                                                     */
+/* CAVEAT (same spirit as UCRT_XP_USE_STD_NAMES above): these macros   */
+/* rewrite the real Win32 names. Define the switch only in files that  */
+/* are compiled with _WIN32_WINNT < 0x0600 (the default for this       */
+/* project, where the SDK does not declare these APIs at all) and that */
+/* do not include Vista+ SDK declarations of them after this header.   */
+/* Not supported: SleepConditionVariableSRW, InitOnceBeginInitialize/  */
+/* InitOnceComplete - see ucrt_xp.h.                                   */
+/* ------------------------------------------------------------------ */
+#ifdef UCRT_XP_USE_VISTA_NAMES
+
+#undef CONDITION_VARIABLE
+#undef PCONDITION_VARIABLE
+#undef INIT_ONCE
+#undef PINIT_ONCE
+#undef PINIT_ONCE_FN
+#undef CONDITION_VARIABLE_INIT
+#undef INIT_ONCE_STATIC_INIT
+#define CONDITION_VARIABLE                  UCRT_XP_CONDITION_VARIABLE
+#define PCONDITION_VARIABLE                 UCRT_XP_CONDITION_VARIABLE *
+#define CONDITION_VARIABLE_INIT             UCRT_XP_CONDITION_VARIABLE_INIT
+#define INIT_ONCE                           UCRT_XP_INIT_ONCE
+#define PINIT_ONCE                          UCRT_XP_INIT_ONCE *
+#define PINIT_ONCE_FN                       UCRT_XP_INIT_ONCE_FN
+#define INIT_ONCE_STATIC_INIT               UCRT_XP_INIT_ONCE_STATIC_INIT
+
+#define InitializeConditionVariable(cv)         ucrt_xp_InitializeConditionVariable(cv)
+#define SleepConditionVariableCS(cv, cs, ms)    ucrt_xp_SleepConditionVariableCS(cv, cs, ms)
+#define WakeConditionVariable(cv)               ucrt_xp_WakeConditionVariable(cv)
+#define WakeAllConditionVariable(cv)            ucrt_xp_WakeAllConditionVariable(cv)
+#define InitOnceInitialize(once)                ucrt_xp_InitOnceInitialize(once)
+#define InitOnceExecuteOnce(once, fn, p, ctx)   ucrt_xp_InitOnceExecuteOnce(once, fn, p, ctx)
+
+#endif /* UCRT_XP_USE_VISTA_NAMES */
 
 #endif /* UCRT_XP_COMPAT_H */

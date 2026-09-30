@@ -44,4 +44,10 @@ int ucrt_xp__format_double_ascii(char *out, size_t outcap, double value,
                                   int precision, char conv,
                                   int force_sign, int space_sign);
 
+/* sync.c internals. force_fallback is a test hook: it makes the XP
+ * fallback run even on Vista+; call it only while no condition variable
+ * or once object is in use. cleanup is called from DllMain(PROCESS_DETACH). */
+void ucrt_xp__sync_force_fallback(int on);
+void ucrt_xp__sync_cleanup(void);
+
 #endif
