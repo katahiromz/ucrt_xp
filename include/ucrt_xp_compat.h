@@ -402,6 +402,45 @@
 #define wctype(p)                 ucrt_xp_wctype(p)
 #define iswctype(c, d)            ucrt_xp_iswctype(c, d)
 
+
+#define memcpy_s(d, ds, s, n)     ucrt_xp_memcpy_s(d, ds, s, n)
+#define memmove_s(d, ds, s, n)    ucrt_xp_memmove_s(d, ds, s, n)
+#define strcpy_s(d, n, s)         ucrt_xp_strcpy_s(d, n, s)
+#define strncpy_s(d, n, s, c)     ucrt_xp_strncpy_s(d, n, s, c)
+#define strcat_s(d, n, s)         ucrt_xp_strcat_s(d, n, s)
+#define strncat_s(d, n, s, c)     ucrt_xp_strncat_s(d, n, s, c)
+#define strnlen_s(s, n)           ucrt_xp_strnlen_s(s, n)
+#define strtok_s(s, d, c)         ucrt_xp_strtok_s(s, d, c)
+#define _strlwr_s(s, n)           ucrt_xp_strlwr_s(s, n)
+#define _strupr_s(s, n)           ucrt_xp_strupr_s(s, n)
+#define wcscpy_s(d, n, s)         ucrt_xp_wcscpy_s(d, n, s)
+#define wcsncpy_s(d, n, s, c)     ucrt_xp_wcsncpy_s(d, n, s, c)
+#define wcscat_s(d, n, s)         ucrt_xp_wcscat_s(d, n, s)
+#define wcsncat_s(d, n, s, c)     ucrt_xp_wcsncat_s(d, n, s, c)
+#define wcsnlen_s(s, n)           ucrt_xp_wcsnlen_s(s, n)
+#define wcstok_s(s, d, c)         ucrt_xp_wcstok_s(s, d, c)
+#define _wcslwr_s(s, n)           ucrt_xp_wcslwr_s(s, n)
+#define _wcsupr_s(s, n)           ucrt_xp_wcsupr_s(s, n)
+#define sprintf_s                 ucrt_xp_sprintf_s
+#define vsprintf_s                ucrt_xp_vsprintf_s
+#define snprintf_s                ucrt_xp_snprintf_s
+#define vsnprintf_s               ucrt_xp_vsnprintf_s
+#define swprintf_s                ucrt_xp_swprintf_s
+#define vswprintf_s               ucrt_xp_vswprintf_s
+#define fopen_s(p, f, m)          ucrt_xp_fopen_s(p, f, m)
+#define _wfopen_s(p, f, m)        ucrt_xp_wfopen_s(p, f, m)
+#define getenv_s(r, b, n, v)      ucrt_xp_getenv_s(r, b, n, v)
+#define tmpnam_s(s, n)            ucrt_xp_tmpnam_s(s, n)
+#define gets_s(b, n)              ucrt_xp_gets_s(b, n)
+#define localtime_s(t, tm)        ucrt_xp_localtime_s(t, tm)
+#define gmtime_s(t, tm)           ucrt_xp_gmtime_s(t, tm)
+#define asctime_s(b, n, t)        ucrt_xp_asctime_s(b, n, t)
+#define ctime_s(b, n, t)          ucrt_xp_ctime_s(b, n, t)
+#define mbstowcs_s                ucrt_xp_mbstowcs_s
+#define wcstombs_s                ucrt_xp_wcstombs_s
+#define qsort_s                   ucrt_xp_qsort_s
+#define bsearch_s                 ucrt_xp_bsearch_s
+
 #endif /* UCRT_XP_USE_STD_NAMES */
 
 /* ------------------------------------------------------------------ */

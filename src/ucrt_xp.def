@@ -359,3 +359,41 @@ EXPORTS
     ucrt_xp_assert                         @384
     ucrt_xp_wctype                         @385
     ucrt_xp_iswctype                       @386
+
+    ucrt_xp_memcpy_s                       @387
+    ucrt_xp_memmove_s                      @388
+    ucrt_xp_strcpy_s                       @389
+    ucrt_xp_strncpy_s                      @390
+    ucrt_xp_strcat_s                       @391
+    ucrt_xp_strncat_s                      @392
+    ucrt_xp_strnlen_s                      @393
+    ucrt_xp_strtok_s                       @394
+    ucrt_xp_strlwr_s                       @395
+    ucrt_xp_strupr_s                       @396
+    ucrt_xp_wcscpy_s                       @397
+    ucrt_xp_wcsncpy_s                      @398
+    ucrt_xp_wcscat_s                       @399
+    ucrt_xp_wcsncat_s                      @400
+    ucrt_xp_wcsnlen_s                      @401
+    ucrt_xp_wcstok_s                       @402
+    ucrt_xp_wcslwr_s                       @403
+    ucrt_xp_wcsupr_s                       @404
+    ucrt_xp_vsprintf_s                     @405
+    ucrt_xp_sprintf_s                      @406
+    ucrt_xp_vsnprintf_s                    @407
+    ucrt_xp_snprintf_s                     @408
+    ucrt_xp_vswprintf_s                    @409
+    ucrt_xp_swprintf_s                     @410
+    ucrt_xp_fopen_s                        @411
+    ucrt_xp_wfopen_s                       @412
+    ucrt_xp_getenv_s                       @413
+    ucrt_xp_tmpnam_s                       @414
+    ucrt_xp_gets_s                         @415
+    ucrt_xp_localtime_s                    @416
+    ucrt_xp_gmtime_s                       @417
+    ucrt_xp_asctime_s                      @418
+    ucrt_xp_ctime_s                        @419
+    ucrt_xp_mbstowcs_s                     @420
+    ucrt_xp_wcstombs_s                     @421
+    ucrt_xp_qsort_s                        @422
+    ucrt_xp_bsearch_s                      @423

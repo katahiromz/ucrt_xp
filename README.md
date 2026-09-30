@@ -52,9 +52,10 @@ supported via `ucrt_xp_static`.
 | multibyte | `mblen`/`mbtowc`/`mbstowcs`/`wcstombs` |
 | exception | SEH trampoline + `ucrt_xp_guarded_call` |
 | assert | `assert` macro → `ucrt_xp_assert` |
+| secure CRT | `strcpy_s`/`memcpy_s`/`sprintf_s`/`fopen_s`/`localtime_s`/… |
 
 **Not covered (by design):** `<math.h>` transcendentals (use the compiler’s),
-`setjmp`/`longjmp` (compiler intrinsics), full secure-CRT `*_s` surface.
+`setjmp`/`longjmp` (compiler intrinsics). Secure CRT `*_s` is included (string/mem/printf/file/time/mb).
 
 ## Design rules that matter
 
@@ -98,4 +99,4 @@ Targets XP subsystem (`5.01`) when built with MSVC.
 3. Breaking change → bump `UCRT_XP_ABI_MAJOR` and ship a new DLL name.
 4. Every new export gets the next ordinal in `ucrt_xp.def`.
 
-Current ABI: **1.9** (`UCRT_XP_ABI_MAJOR.MINOR`).
+Current ABI: **1.10** (`UCRT_XP_ABI_MAJOR.MINOR`).

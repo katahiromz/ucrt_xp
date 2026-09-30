@@ -32,7 +32,7 @@ extern "C" {
  * changes (new functions appended at the end of this header).
  */
 #define UCRT_XP_ABI_MAJOR 1
-#define UCRT_XP_ABI_MINOR 9   /* 9: dup2 fix, assert, wctype/iswctype */
+#define UCRT_XP_ABI_MINOR 10  /* 10: secure CRT *_s family */
 #define UCRT_XP_ABI_VERSION ((UCRT_XP_ABI_MAJOR << 16) | UCRT_XP_ABI_MINOR)
 
 typedef struct UCRT_XP_VERSION_INFO {
@@ -879,6 +879,57 @@ __declspec(dllexport) void __cdecl ucrt_xp_InitOnceInitialize(
  * call returns (context receives the stored value, if non-NULL). */
 __declspec(dllexport) BOOL __cdecl ucrt_xp_InitOnceExecuteOnce(
     UCRT_XP_INIT_ONCE *once, UCRT_XP_INIT_ONCE_FN fn, PVOID param, PVOID *context);
+
+
+/* ------------------------------------------------------------------ */
+/* Secure CRT (*_s) - returns 0 / errno-style codes                    */
+/* ------------------------------------------------------------------ */
+#ifndef _TRUNCATE
+#define _TRUNCATE ((size_t)-1)
+#endif
+#ifndef STRUNCATE
+#define STRUNCATE 80
+#endif
+
+__declspec(dllexport) int __cdecl ucrt_xp_memcpy_s(void *dest, size_t destsz, const void *src, size_t count);
+__declspec(dllexport) int __cdecl ucrt_xp_memmove_s(void *dest, size_t destsz, const void *src, size_t count);
+__declspec(dllexport) int __cdecl ucrt_xp_strcpy_s(char *dest, size_t destsz, const char *src);
+__declspec(dllexport) int __cdecl ucrt_xp_strncpy_s(char *dest, size_t destsz, const char *src, size_t count);
+__declspec(dllexport) int __cdecl ucrt_xp_strcat_s(char *dest, size_t destsz, const char *src);
+__declspec(dllexport) int __cdecl ucrt_xp_strncat_s(char *dest, size_t destsz, const char *src, size_t count);
+__declspec(dllexport) size_t __cdecl ucrt_xp_strnlen_s(const char *s, size_t maxsize);
+__declspec(dllexport) char* __cdecl ucrt_xp_strtok_s(char *str, const char *delim, char **context);
+__declspec(dllexport) int __cdecl ucrt_xp_strlwr_s(char *s, size_t sizeInBytes);
+__declspec(dllexport) int __cdecl ucrt_xp_strupr_s(char *s, size_t sizeInBytes);
+__declspec(dllexport) int __cdecl ucrt_xp_wcscpy_s(wchar_t *dest, size_t destsz, const wchar_t *src);
+__declspec(dllexport) int __cdecl ucrt_xp_wcsncpy_s(wchar_t *dest, size_t destsz, const wchar_t *src, size_t count);
+__declspec(dllexport) int __cdecl ucrt_xp_wcscat_s(wchar_t *dest, size_t destsz, const wchar_t *src);
+__declspec(dllexport) int __cdecl ucrt_xp_wcsncat_s(wchar_t *dest, size_t destsz, const wchar_t *src, size_t count);
+__declspec(dllexport) size_t __cdecl ucrt_xp_wcsnlen_s(const wchar_t *s, size_t maxsize);
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcstok_s(wchar_t *str, const wchar_t *delim, wchar_t **context);
+__declspec(dllexport) int __cdecl ucrt_xp_wcslwr_s(wchar_t *s, size_t sizeInWords);
+__declspec(dllexport) int __cdecl ucrt_xp_wcsupr_s(wchar_t *s, size_t sizeInWords);
+__declspec(dllexport) int __cdecl ucrt_xp_vsprintf_s(char *buf, size_t bufsz, const char *fmt, va_list args);
+__declspec(dllexport) int __cdecl ucrt_xp_sprintf_s(char *buf, size_t bufsz, const char *fmt, ...);
+__declspec(dllexport) int __cdecl ucrt_xp_vsnprintf_s(char *buf, size_t bufsz, size_t count, const char *fmt, va_list args);
+__declspec(dllexport) int __cdecl ucrt_xp_snprintf_s(char *buf, size_t bufsz, size_t count, const char *fmt, ...);
+__declspec(dllexport) int __cdecl ucrt_xp_vswprintf_s(wchar_t *buf, size_t bufsz, const wchar_t *fmt, va_list args);
+__declspec(dllexport) int __cdecl ucrt_xp_swprintf_s(wchar_t *buf, size_t bufsz, const wchar_t *fmt, ...);
+__declspec(dllexport) int __cdecl ucrt_xp_fopen_s(UCRT_XP_FILE **pfile, const char *filename, const char *mode);
+__declspec(dllexport) int __cdecl ucrt_xp_wfopen_s(UCRT_XP_FILE **pfile, const wchar_t *filename, const wchar_t *mode);
+__declspec(dllexport) int __cdecl ucrt_xp_getenv_s(size_t *requiredCount, char *buffer, size_t bufferCount, const char *varname);
+__declspec(dllexport) int __cdecl ucrt_xp_tmpnam_s(char *s, size_t size);
+__declspec(dllexport) int __cdecl ucrt_xp_gets_s(char *buf, size_t sizeInCharacters);
+__declspec(dllexport) int __cdecl ucrt_xp_localtime_s(UCRT_XP_TM *tm, const UCRT_XP_TIME_T *timer);
+__declspec(dllexport) int __cdecl ucrt_xp_gmtime_s(UCRT_XP_TM *tm, const UCRT_XP_TIME_T *timer);
+__declspec(dllexport) int __cdecl ucrt_xp_asctime_s(char *buf, size_t bufsz, const UCRT_XP_TM *tm);
+__declspec(dllexport) int __cdecl ucrt_xp_ctime_s(char *buf, size_t bufsz, const UCRT_XP_TIME_T *timer);
+__declspec(dllexport) int __cdecl ucrt_xp_mbstowcs_s(size_t *retval, wchar_t *wcstr, size_t sizeInWords, const char *mbstr, size_t count);
+__declspec(dllexport) int __cdecl ucrt_xp_wcstombs_s(size_t *retval, char *mbstr, size_t sizeInBytes, const wchar_t *wcstr, size_t count);
+__declspec(dllexport) void __cdecl ucrt_xp_qsort_s(void *base, size_t num, size_t width,
+    int (__cdecl *compare)(void *, const void *, const void *), void *context);
+__declspec(dllexport) void* __cdecl ucrt_xp_bsearch_s(const void *key, const void *base, size_t num, size_t width,
+    int (__cdecl *compare)(void *, const void *, const void *), void *context);
 
 #ifdef __cplusplus
 }

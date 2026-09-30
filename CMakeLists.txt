@@ -26,6 +26,7 @@ set(UCRT_XP_SOURCES
     src/scan.c
     src/wide.c
     src/string.c
+    src/secure.c
     src/ctype.c
     src/convert.c
     src/process.c
