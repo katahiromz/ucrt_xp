@@ -17,6 +17,7 @@
 #include "internal.h"
 #include <stdio.h>
 #include <stdarg.h>
+#include <assert.h>
 
 /* ------------------------------------------------------------------ */
 /* Descriptor table                                                    */
@@ -143,8 +144,7 @@ static FdEntry *get_fd(int fd)
 
 __declspec(dllexport) int __cdecl ucrt_xp_open(const char *path, int oflag, int pmode)
 {
-    DWORD access = 0;
-    DWORD creation = OPEN_EXISTING;
+    DWORD access = 0, creation = OPEN_EXISTING;
     DWORD share = FILE_SHARE_READ | FILE_SHARE_WRITE;
     HANDLE h;
     int fd;
@@ -377,6 +377,7 @@ struct UCRT_XP_FILE {
  * catch. */
 static BOOL validate_file(const UCRT_XP_FILE *f)
 {
+    assert(f != NULL && f->magic == UCRT_XP_FILE_MAGIC);
     return f != NULL && f->magic == UCRT_XP_FILE_MAGIC;
 }
 
@@ -448,8 +449,7 @@ UCRT_XP_FILE *ucrt_xp__file_from_fd(int fd)
 
 __declspec(dllexport) UCRT_XP_FILE* __cdecl ucrt_xp_fopen(const char *path, const char *mode)
 {
-    int oflag;
-    int fd;
+    int oflag, fd;
 
     if (!parse_mode(mode, &oflag)) return NULL;
 
@@ -701,8 +701,7 @@ __declspec(dllexport) char* __cdecl ucrt_xp_fgets(char *s, int n, UCRT_XP_FILE *
 
 __declspec(dllexport) int __cdecl ucrt_xp_fputs(const char *s, UCRT_XP_FILE *f)
 {
-    size_t len;
-    size_t written;
+    size_t len, written;
     if (!s || !validate_file(f)) return -1;
     len = ucrt_xp_strlen(s);
     written = ucrt_xp_fwrite(s, 1, len, f);
@@ -726,8 +725,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_fprintf(UCRT_XP_FILE *f, const char *f
     char stackbuf[512];
     char *heapbuf = NULL;
     char *outbuf = stackbuf;
-    int needed;
-    int written;
+    int needed, written;
     va_list args;
 
     if (!validate_file(f)) return -1;

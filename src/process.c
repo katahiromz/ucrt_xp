@@ -215,7 +215,9 @@ __declspec(dllexport) int __cdecl ucrt_xp_system(const char *command)
 
     ZeroMemory(&si, sizeof(si));
     si.cb = sizeof(si);
+#ifndef NDEBUG
     ZeroMemory(&pi, sizeof(pi));
+#endif
 
     if (!CreateProcessA(NULL, cmd_copy, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
         ucrt_xp_free(cmd_copy);

@@ -11,6 +11,7 @@
  * for every single malloc/free pair.
  */
 #include "internal.h"
+#include <assert.h>
 
 #ifndef HeapEnableTerminationOnCorruption
 #define HeapEnableTerminationOnCorruption ((HEAP_INFORMATION_CLASS)1)
@@ -59,6 +60,7 @@ static size_t slot_to_size(int slot)
 static ThreadCache *get_thread_cache(void)
 {
     ThreadCache *tc;
+    assert(g_tls_index != TLS_OUT_OF_INDEXES);
     if (g_tls_index == TLS_OUT_OF_INDEXES) return NULL;
 
     tc = (ThreadCache *)TlsGetValue(g_tls_index);
@@ -90,6 +92,7 @@ __declspec(dllexport) BOOL __cdecl ucrt_xp_heap_init(void)
 
     if (g_tls_index == TLS_OUT_OF_INDEXES) {
         g_tls_index = TlsAlloc();
+        assert(g_tls_index != TLS_OUT_OF_INDEXES);
     }
     return TRUE;
 }

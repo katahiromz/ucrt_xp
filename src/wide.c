@@ -18,8 +18,7 @@
 
 __declspec(dllexport) int __cdecl ucrt_xp_wopen(const wchar_t *path, int oflag, int pmode)
 {
-    DWORD access = 0;
-    DWORD creation = OPEN_EXISTING;
+    DWORD access = 0, creation = OPEN_EXISTING;
     DWORD share = FILE_SHARE_READ | FILE_SHARE_WRITE;
     HANDLE h;
     int fd;
@@ -60,8 +59,7 @@ __declspec(dllexport) int __cdecl ucrt_xp_wopen(const wchar_t *path, int oflag, 
 
 static BOOL parse_wide_mode(const wchar_t *mode, int *oflag)
 {
-    int f = 0;
-    int has_plus;
+    int has_plus, f = 0;
     const wchar_t *p;
     if (!mode || !*mode) return FALSE;
 
@@ -89,8 +87,7 @@ static BOOL parse_wide_mode(const wchar_t *mode, int *oflag)
 
 __declspec(dllexport) UCRT_XP_FILE* __cdecl ucrt_xp_wfopen(const wchar_t *path, const wchar_t *mode)
 {
-    int oflag;
-    int fd;
+    int oflag, fd;
 
     if (!parse_wide_mode(mode, &oflag)) return NULL;
 

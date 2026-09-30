@@ -11,6 +11,7 @@
  * usage.
  */
 #include "internal.h"
+#include <assert.h>
 
 __declspec(dllexport) BOOL __cdecl ucrt_xp_cond_init(UCRT_XP_COND *cv)
 {
@@ -20,10 +21,14 @@ __declspec(dllexport) BOOL __cdecl ucrt_xp_cond_init(UCRT_XP_COND *cv)
     cv->was_broadcast = 0;
 
     cv->sema = CreateSemaphoreA(NULL, 0, 0x7fffffff, NULL);
-    if (!cv->sema) return FALSE;
+    if (!cv->sema) {
+        assert(0);
+        return FALSE;
+    }
 
     cv->waiters_done = CreateEventA(NULL, /*manual reset*/FALSE, FALSE, NULL);
     if (!cv->waiters_done) {
+        assert(0);
         CloseHandle(cv->sema);
         cv->sema = NULL;
         return FALSE;

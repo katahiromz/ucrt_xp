@@ -8,6 +8,7 @@
  */
 #include "internal.h"
 #include <stdio.h>
+#include <assert.h>
 
 HANDLE g_ucrt_xp_heap = NULL;
 static volatile LONG g_initialized = 0;
@@ -35,6 +36,7 @@ DWORD ucrt_xp_detect_sp_level(void)
 
 static void ucrt_xp_fatal_abi_mismatch(DWORD expected, DWORD actual)
 {
+#ifndef NDEBUG
     char msg[256];
     wsprintfA(msg,
         "ucrt_xp.dll ABI mismatch.\n\n"
@@ -42,10 +44,21 @@ static void ucrt_xp_fatal_abi_mismatch(DWORD expected, DWORD actual)
         "but the loaded ucrt_xp.dll reports ABI 0x%08lX.\n\n"
         "Replace ucrt_xp.dll with a matching version or rebuild the module.",
         expected, actual);
-    MessageBoxA(NULL, msg, "ucrt_xp: fatal ABI mismatch", MB_OK | MB_ICONERROR);
+    switch (MessageBoxA(NULL, msg, "ucrt_xp: fatal ABI mismatch", MB_ABORTRETRYIGNORE))
+    {
+    case IDABORT:
+        ucrt_xp_abort();
+        break;
+    case IDRETRY:
+        assert(0);
+        break;
+    case IDIGNORE:
+        return;
+    }
     /* Do not attempt any further ucrt_xp / CRT usage past this point -
      * the state of the runtime cannot be trusted. */
     TerminateProcess(GetCurrentProcess(), (UINT)0xC0000409 /* STATUS_STACK_BUFFER_OVERRUN-ish sentinel */);
+#endif
 }
 
 __declspec(dllexport) BOOL __cdecl ucrt_xp_init(DWORD expected_abi_version)
