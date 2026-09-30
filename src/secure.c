@@ -15,6 +15,9 @@
 #ifndef STRUNCATE
 #define STRUNCATE 80
 #endif
+#ifndef EOF
+#define EOF (-1)
+#endif
 
 /* Optional truncate mode for strncpy_s / wcsncpy_s (MSVC). */
 #ifndef _TRUNCATE
