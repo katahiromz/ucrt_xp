@@ -186,6 +186,12 @@
 #define _strupr(s)                ucrt_xp_strupr(s)
 #define strcoll(a, b)             ucrt_xp_strcoll(a, b)
 #define strxfrm(d, s, n)          ucrt_xp_strxfrm(d, s, n)
+#define _stricoll(a, b)           ucrt_xp_stricoll(a, b)
+#define _strnicoll(a, b, n)       ucrt_xp_strnicoll(a, b, n)
+#define _memicmp(a, b, n)         ucrt_xp_memicmp(a, b, n)
+#define _strrev(s)                ucrt_xp_strrev(s)
+#define strcasecmp(a, b)          ucrt_xp_strcasecmp(a, b)
+#define strncasecmp(a, b, n)      ucrt_xp_strncasecmp(a, b, n)
 
 /* ------------------------------------------------------------------ */
 /* <ctype.h>                                                          */
@@ -207,7 +213,6 @@
 /* ------------------------------------------------------------------ */
 /* errno                                                              */
 /* ------------------------------------------------------------------ */
-#undef errno
 #define errno                     (*ucrt_xp_errno_location())
 
 /* ------------------------------------------------------------------ */
@@ -263,6 +268,10 @@
 #define wcsxfrm(d, s, n)          ucrt_xp_wcsxfrm(d, s, n)
 #define _wcslwr(s)                ucrt_xp_wcslwr(s)
 #define _wcsupr(s)                ucrt_xp_wcsupr(s)
+#define wcscoll(a, b)             ucrt_xp_wcscoll(a, b)
+#define _wcsicoll(a, b)           ucrt_xp_wcsicoll(a, b)
+#define _wcsnicoll(a, b, n)       ucrt_xp_wcsnicoll(a, b, n)
+#define _wcsrev(s)                ucrt_xp_wcsrev(s)
 
 #endif /* UCRT_XP_USE_STD_NAMES */
 

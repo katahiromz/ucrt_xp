@@ -295,3 +295,54 @@ __declspec(dllexport) size_t __cdecl ucrt_xp_strxfrm(
 {
     return ucrt_xp_strxfrm_l(dest, src, n, NULL);
 }
+
+/* ------------------------------------------------------------------ */
+/* _stricoll / _strnicoll (case-insensitive locale collation)          */
+/* ------------------------------------------------------------------ */
+
+/* Locale-aware case-insensitive string comparison (MSVC _stricoll). */
+__declspec(dllexport) int __cdecl ucrt_xp_stricoll_l(
+    const char *a, const char *b, ucrt_xp_locale_t loc)
+{
+    ucrt_xp_locale_t use_loc = loc ? loc : ucrt_xp_locale_get_thread();
+    LCID lcid = use_loc ? use_loc->lcid : LOCALE_USER_DEFAULT;
+    int r;
+    if (!a || !b) return (a == b) ? 0 : (a ? 1 : -1);
+    r = CompareStringA(lcid, NORM_IGNORECASE, a, -1, b, -1);
+    if (r == 0) return ucrt_xp_stricmp(a, b);
+    return r - CSTR_EQUAL;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_stricoll(const char *a, const char *b)
+{
+    return ucrt_xp_stricoll_l(a, b, NULL);
+}
+
+/* Case-insensitive locale collation of at most n characters
+ * (MSVC _strnicoll). Stops at the first NUL in either string. */
+__declspec(dllexport) int __cdecl ucrt_xp_strnicoll_l(
+    const char *a, const char *b, size_t n, ucrt_xp_locale_t loc)
+{
+    ucrt_xp_locale_t use_loc = loc ? loc : ucrt_xp_locale_get_thread();
+    LCID lcid = use_loc ? use_loc->lcid : LOCALE_USER_DEFAULT;
+    size_t la, lb;
+    int r;
+
+    if (n == 0) return 0;
+    if (!a || !b) return (a == b) ? 0 : (a ? 1 : -1);
+
+    la = 0;
+    while (la < n && a[la]) la++;
+    lb = 0;
+    while (lb < n && b[lb]) lb++;
+
+    r = CompareStringA(lcid, NORM_IGNORECASE, a, (int)la, b, (int)lb);
+    if (r == 0) return ucrt_xp_strnicmp(a, b, n);
+    return r - CSTR_EQUAL;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_strnicoll(
+    const char *a, const char *b, size_t n)
+{
+    return ucrt_xp_strnicoll_l(a, b, n, NULL);
+}

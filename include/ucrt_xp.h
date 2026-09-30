@@ -32,7 +32,7 @@ extern "C" {
  * changes (new functions appended at the end of this header).
  */
 #define UCRT_XP_ABI_MAJOR 1
-#define UCRT_XP_ABI_MINOR 2   /* 2: added strcoll/strxfrm/strlwr/strupr/memccpy/wcsxfrm */
+#define UCRT_XP_ABI_MINOR 3   /* 3: wcscoll/stricoll/memicmp/strrev/strcasecmp family */
 #define UCRT_XP_ABI_VERSION ((UCRT_XP_ABI_MAJOR << 16) | UCRT_XP_ABI_MINOR)
 
 typedef struct UCRT_XP_VERSION_INFO {
@@ -204,6 +204,12 @@ __declspec(dllexport) int    __cdecl ucrt_xp_strcoll_l(const char *a, const char
 __declspec(dllexport) int    __cdecl ucrt_xp_strcoll(const char *a, const char *b);
 __declspec(dllexport) size_t __cdecl ucrt_xp_strxfrm_l(char *dest, const char *src, size_t n, ucrt_xp_locale_t loc);
 __declspec(dllexport) size_t __cdecl ucrt_xp_strxfrm(char *dest, const char *src, size_t n);
+
+/* Case-insensitive locale collation (MSVC _stricoll / _strnicoll). */
+__declspec(dllexport) int __cdecl ucrt_xp_stricoll_l(const char *a, const char *b, ucrt_xp_locale_t loc);
+__declspec(dllexport) int __cdecl ucrt_xp_stricoll(const char *a, const char *b);
+__declspec(dllexport) int __cdecl ucrt_xp_strnicoll_l(const char *a, const char *b, size_t n, ucrt_xp_locale_t loc);
+__declspec(dllexport) int __cdecl ucrt_xp_strnicoll(const char *a, const char *b, size_t n);
 
 /* ------------------------------------------------------------------ */
 /* Exception trampoline                                                */
@@ -424,6 +430,15 @@ __declspec(dllexport) size_t   __cdecl ucrt_xp_wcsxfrm(wchar_t *dest, const wcha
 __declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcslwr(wchar_t *s);
 __declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcsupr(wchar_t *s);
 
+/* Wide collation compare (C89 wcscoll) and MSVC case-insensitive variants. */
+__declspec(dllexport) int      __cdecl ucrt_xp_wcscoll_l(const wchar_t *a, const wchar_t *b, ucrt_xp_locale_t loc);
+__declspec(dllexport) int      __cdecl ucrt_xp_wcscoll(const wchar_t *a, const wchar_t *b);
+__declspec(dllexport) int      __cdecl ucrt_xp_wcsicoll_l(const wchar_t *a, const wchar_t *b, ucrt_xp_locale_t loc);
+__declspec(dllexport) int      __cdecl ucrt_xp_wcsicoll(const wchar_t *a, const wchar_t *b);
+__declspec(dllexport) int      __cdecl ucrt_xp_wcsnicoll_l(const wchar_t *a, const wchar_t *b, size_t n, ucrt_xp_locale_t loc);
+__declspec(dllexport) int      __cdecl ucrt_xp_wcsnicoll(const wchar_t *a, const wchar_t *b, size_t n);
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcsrev(wchar_t *s);
+
 /* UTF-16 <-> ANSI (current locale's code page) conversion helpers. On
  * failure both return -1; on success, the number of wchar_t/char units
  * written (excluding the NUL). Passing out=NULL/outcap=0 returns the
@@ -502,6 +517,14 @@ __declspec(dllexport) void*  __cdecl ucrt_xp_memccpy(void *dst, const void *src,
 /* In-place case conversion (MSVC _strlwr / _strupr). */
 __declspec(dllexport) char*  __cdecl ucrt_xp_strlwr(char *s);
 __declspec(dllexport) char*  __cdecl ucrt_xp_strupr(char *s);
+
+/* Case-insensitive memcmp (MSVC _memicmp) and in-place reverse (MSVC _strrev). */
+__declspec(dllexport) int   __cdecl ucrt_xp_memicmp(const void *a, const void *b, size_t n);
+__declspec(dllexport) char* __cdecl ucrt_xp_strrev(char *s);
+
+/* POSIX case-insensitive compare (aliases of _stricmp / _strnicmp). */
+__declspec(dllexport) int __cdecl ucrt_xp_strcasecmp(const char *a, const char *b);
+__declspec(dllexport) int __cdecl ucrt_xp_strncasecmp(const char *a, const char *b, size_t n);
 
 /* ------------------------------------------------------------------ */
 /* <ctype.h> family (fixed "C"/ASCII locale - see ctype.c)             */

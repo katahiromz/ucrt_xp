@@ -1228,3 +1228,82 @@ __declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcsupr(wchar_t *s)
     CharUpperW(s);
     return s;
 }
+
+/* ------------------------------------------------------------------ */
+/* wcscoll / _wcsicoll / _wcsnicoll / _wcsrev                           */
+/* ------------------------------------------------------------------ */
+
+/* Locale-aware wide string comparison (C89 wcscoll). */
+__declspec(dllexport) int __cdecl ucrt_xp_wcscoll_l(
+    const wchar_t *a, const wchar_t *b, ucrt_xp_locale_t loc)
+{
+    LCID lcid = ucrt_xp__locale_lcid(loc);
+    int r;
+    if (!a || !b) return (a == b) ? 0 : (a ? 1 : -1);
+    r = CompareStringW(lcid, 0, a, -1, b, -1);
+    if (r == 0) return ucrt_xp_wcscmp(a, b);
+    return r - CSTR_EQUAL;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_wcscoll(const wchar_t *a, const wchar_t *b)
+{
+    return ucrt_xp_wcscoll_l(a, b, NULL);
+}
+
+/* Locale-aware case-insensitive wide comparison (MSVC _wcsicoll). */
+__declspec(dllexport) int __cdecl ucrt_xp_wcsicoll_l(
+    const wchar_t *a, const wchar_t *b, ucrt_xp_locale_t loc)
+{
+    LCID lcid = ucrt_xp__locale_lcid(loc);
+    int r;
+    if (!a || !b) return (a == b) ? 0 : (a ? 1 : -1);
+    r = CompareStringW(lcid, NORM_IGNORECASE, a, -1, b, -1);
+    if (r == 0) return ucrt_xp_wcsicmp(a, b);
+    return r - CSTR_EQUAL;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_wcsicoll(const wchar_t *a, const wchar_t *b)
+{
+    return ucrt_xp_wcsicoll_l(a, b, NULL);
+}
+
+/* Case-insensitive locale collation of at most n wide characters
+ * (MSVC _wcsnicoll). */
+__declspec(dllexport) int __cdecl ucrt_xp_wcsnicoll_l(
+    const wchar_t *a, const wchar_t *b, size_t n, ucrt_xp_locale_t loc)
+{
+    LCID lcid = ucrt_xp__locale_lcid(loc);
+    size_t la, lb;
+    int r;
+
+    if (n == 0) return 0;
+    if (!a || !b) return (a == b) ? 0 : (a ? 1 : -1);
+
+    la = ucrt_xp_wcsnlen(a, n);
+    lb = ucrt_xp_wcsnlen(b, n);
+
+    r = CompareStringW(lcid, NORM_IGNORECASE, a, (int)la, b, (int)lb);
+    if (r == 0) return ucrt_xp_wcsnicmp(a, b, n);
+    return r - CSTR_EQUAL;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_wcsnicoll(
+    const wchar_t *a, const wchar_t *b, size_t n)
+{
+    return ucrt_xp_wcsnicoll_l(a, b, n, NULL);
+}
+
+/* Reverse a wide string in place (MSVC _wcsrev). */
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcsrev(wchar_t *s)
+{
+    wchar_t *lo, *hi;
+    if (!s || !*s) return s;
+    lo = s;
+    hi = s + ucrt_xp_wcslen(s) - 1;
+    while (lo < hi) {
+        wchar_t t = *lo;
+        *lo++ = *hi;
+        *hi-- = t;
+    }
+    return s;
+}

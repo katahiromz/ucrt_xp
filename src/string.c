@@ -307,3 +307,53 @@ __declspec(dllexport) char* __cdecl ucrt_xp_strupr(char *s)
     CharUpperA(s);
     return s;
 }
+
+/* ------------------------------------------------------------------ */
+/* _memicmp, _strrev, strcasecmp / strncasecmp                          */
+/* ------------------------------------------------------------------ */
+
+/* Case-insensitive memcmp of at most n bytes (MSVC _memicmp).
+ * Uses locale-independent ASCII folding for speed and predictability;
+ * for full locale folding use CompareString on the relevant spans. */
+__declspec(dllexport) int __cdecl ucrt_xp_memicmp(const void *a, const void *b, size_t n)
+{
+    const unsigned char *pa = (const unsigned char *)a;
+    const unsigned char *pb = (const unsigned char *)b;
+    size_t i;
+    if (n == 0) return 0;
+    if (!a || !b) return (a == b) ? 0 : (a ? 1 : -1);
+    for (i = 0; i < n; i++) {
+        unsigned char ca = pa[i];
+        unsigned char cb = pb[i];
+        if (ca >= 'A' && ca <= 'Z') ca = (unsigned char)(ca + ('a' - 'A'));
+        if (cb >= 'A' && cb <= 'Z') cb = (unsigned char)(cb + ('a' - 'A'));
+        if (ca != cb) return (int)ca - (int)cb;
+    }
+    return 0;
+}
+
+/* Reverse a string in place (MSVC _strrev). Returns the same pointer. */
+__declspec(dllexport) char* __cdecl ucrt_xp_strrev(char *s)
+{
+    char *lo, *hi;
+    if (!s || !*s) return s;
+    lo = s;
+    hi = s + ucrt_xp_strlen(s) - 1;
+    while (lo < hi) {
+        char t = *lo;
+        *lo++ = *hi;
+        *hi-- = t;
+    }
+    return s;
+}
+
+/* POSIX strcasecmp / strncasecmp - aliases to the MSVC-style implementations. */
+__declspec(dllexport) int __cdecl ucrt_xp_strcasecmp(const char *a, const char *b)
+{
+    return ucrt_xp_stricmp(a, b);
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_strncasecmp(const char *a, const char *b, size_t n)
+{
+    return ucrt_xp_strnicmp(a, b, n);
+}
