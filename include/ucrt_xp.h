@@ -32,7 +32,7 @@ extern "C" {
  * changes (new functions appended at the end of this header).
  */
 #define UCRT_XP_ABI_MAJOR 1
-#define UCRT_XP_ABI_MINOR 10  /* 10: secure CRT *_s family */
+#define UCRT_XP_ABI_MINOR 11  /* 11: scanf_s/freopen_s/itoa_s/splitpath_s */
 #define UCRT_XP_ABI_VERSION ((UCRT_XP_ABI_MAJOR << 16) | UCRT_XP_ABI_MINOR)
 
 typedef struct UCRT_XP_VERSION_INFO {
@@ -930,6 +930,21 @@ __declspec(dllexport) void __cdecl ucrt_xp_qsort_s(void *base, size_t num, size_
     int (__cdecl *compare)(void *, const void *, const void *), void *context);
 __declspec(dllexport) void* __cdecl ucrt_xp_bsearch_s(const void *key, const void *base, size_t num, size_t width,
     int (__cdecl *compare)(void *, const void *, const void *), void *context);
+
+__declspec(dllexport) int __cdecl ucrt_xp_freopen_s(UCRT_XP_FILE **pfile, const char *path, const char *mode, UCRT_XP_FILE *stream);
+__declspec(dllexport) int __cdecl ucrt_xp_itoa_s(int value, char *buf, size_t size, int radix);
+__declspec(dllexport) int __cdecl ucrt_xp_ltoa_s(long value, char *buf, size_t size, int radix);
+__declspec(dllexport) int __cdecl ucrt_xp_ultoa_s(unsigned long value, char *buf, size_t size, int radix);
+__declspec(dllexport) int __cdecl ucrt_xp_i64toa_s(__int64 value, char *buf, size_t size, int radix);
+__declspec(dllexport) int __cdecl ucrt_xp_ui64toa_s(unsigned __int64 value, char *buf, size_t size, int radix);
+__declspec(dllexport) int __cdecl ucrt_xp_splitpath_s(const char *path, char *drive, size_t driveSize, char *dir, size_t dirSize, char *fname, size_t fnameSize, char *ext, size_t extSize);
+__declspec(dllexport) int __cdecl ucrt_xp_makepath_s(char *path, size_t sizeInBytes, const char *drive, const char *dir, const char *fname, const char *ext);
+__declspec(dllexport) int __cdecl ucrt_xp_vsscanf_s(const char *str, const char *fmt, va_list args);
+__declspec(dllexport) int __cdecl ucrt_xp_sscanf_s(const char *str, const char *fmt, ...);
+__declspec(dllexport) int __cdecl ucrt_xp_vfscanf_s(UCRT_XP_FILE *f, const char *fmt, va_list args);
+__declspec(dllexport) int __cdecl ucrt_xp_fscanf_s(UCRT_XP_FILE *f, const char *fmt, ...);
+__declspec(dllexport) int __cdecl ucrt_xp_scanf_s(const char *fmt, ...);
+
 
 #ifdef __cplusplus
 }

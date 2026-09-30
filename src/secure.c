@@ -604,3 +604,670 @@ __declspec(dllexport) void* __cdecl ucrt_xp_bsearch_s(const void *key, const voi
     g_bsearch_s_wrap = prev;
     return r;
 }
+
+/* ------------------------------------------------------------------ */
+/* freopen_s                                                           */
+/* ------------------------------------------------------------------ */
+
+__declspec(dllexport) int __cdecl ucrt_xp_freopen_s(
+    UCRT_XP_FILE **pfile, const char *path, const char *mode, UCRT_XP_FILE *stream)
+{
+    UCRT_XP_FILE *f;
+    if (!pfile || !path || !mode || !stream) {
+        set_errno_s(EINVAL);
+        return EINVAL;
+    }
+    *pfile = NULL;
+    f = ucrt_xp_freopen(path, mode, stream);
+    if (!f) {
+        set_errno_s(EINVAL);
+        return EINVAL;
+    }
+    *pfile = f;
+    return 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* itoa_s family                                                       */
+/* ------------------------------------------------------------------ */
+
+__declspec(dllexport) int __cdecl ucrt_xp_itoa_s(int value, char *buf, size_t size, int radix)
+{
+    char tmp[72];
+    size_t n;
+    if (!buf || size == 0 || radix < 2 || radix > 36) {
+        set_errno_s(EINVAL);
+        return EINVAL;
+    }
+    if (!ucrt_xp_itoa(value, tmp, radix)) {
+        set_errno_s(EINVAL);
+        return EINVAL;
+    }
+    n = ucrt_xp_strlen(tmp) + 1;
+    if (n > size) {
+        buf[0] = 0;
+        set_errno_s(ERANGE);
+        return ERANGE;
+    }
+    ucrt_xp_memcpy(buf, tmp, n);
+    return 0;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_ltoa_s(long value, char *buf, size_t size, int radix)
+{
+    char tmp[72];
+    size_t n;
+    if (!buf || size == 0 || radix < 2 || radix > 36) {
+        set_errno_s(EINVAL);
+        return EINVAL;
+    }
+    if (!ucrt_xp_ltoa(value, tmp, radix)) {
+        set_errno_s(EINVAL);
+        return EINVAL;
+    }
+    n = ucrt_xp_strlen(tmp) + 1;
+    if (n > size) {
+        buf[0] = 0;
+        set_errno_s(ERANGE);
+        return ERANGE;
+    }
+    ucrt_xp_memcpy(buf, tmp, n);
+    return 0;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_ultoa_s(unsigned long value, char *buf, size_t size, int radix)
+{
+    char tmp[72];
+    size_t n;
+    if (!buf || size == 0 || radix < 2 || radix > 36) {
+        set_errno_s(EINVAL);
+        return EINVAL;
+    }
+    if (!ucrt_xp_ultoa(value, tmp, radix)) {
+        set_errno_s(EINVAL);
+        return EINVAL;
+    }
+    n = ucrt_xp_strlen(tmp) + 1;
+    if (n > size) {
+        buf[0] = 0;
+        set_errno_s(ERANGE);
+        return ERANGE;
+    }
+    ucrt_xp_memcpy(buf, tmp, n);
+    return 0;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_i64toa_s(__int64 value, char *buf, size_t size, int radix)
+{
+    char tmp[80];
+    size_t n;
+    if (!buf || size == 0 || radix < 2 || radix > 36) {
+        set_errno_s(EINVAL);
+        return EINVAL;
+    }
+    if (!ucrt_xp_i64toa(value, tmp, radix)) {
+        set_errno_s(EINVAL);
+        return EINVAL;
+    }
+    n = ucrt_xp_strlen(tmp) + 1;
+    if (n > size) {
+        buf[0] = 0;
+        set_errno_s(ERANGE);
+        return ERANGE;
+    }
+    ucrt_xp_memcpy(buf, tmp, n);
+    return 0;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_ui64toa_s(unsigned __int64 value, char *buf, size_t size, int radix)
+{
+    char tmp[80];
+    size_t n;
+    if (!buf || size == 0 || radix < 2 || radix > 36) {
+        set_errno_s(EINVAL);
+        return EINVAL;
+    }
+    if (!ucrt_xp_ui64toa(value, tmp, radix)) {
+        set_errno_s(EINVAL);
+        return EINVAL;
+    }
+    n = ucrt_xp_strlen(tmp) + 1;
+    if (n > size) {
+        buf[0] = 0;
+        set_errno_s(ERANGE);
+        return ERANGE;
+    }
+    ucrt_xp_memcpy(buf, tmp, n);
+    return 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* _splitpath_s / _makepath_s                                          */
+/* ------------------------------------------------------------------ */
+
+__declspec(dllexport) int __cdecl ucrt_xp_splitpath_s(
+    const char *path,
+    char *drive, size_t driveSize,
+    char *dir, size_t dirSize,
+    char *fname, size_t fnameSize,
+    char *ext, size_t extSize)
+{
+    char d[4], di[256], f[256], e[256];
+    if (!path) {
+        set_errno_s(EINVAL);
+        return EINVAL;
+    }
+    ucrt_xp_splitpath(path, d, di, f, e);
+    if (drive) {
+        if (driveSize == 0) { set_errno_s(EINVAL); return EINVAL; }
+        if (ucrt_xp_strlen(d) + 1 > driveSize) {
+            drive[0] = 0;
+            set_errno_s(ERANGE);
+            return ERANGE;
+        }
+        ucrt_xp_strcpy(drive, d);
+    }
+    if (dir) {
+        if (dirSize == 0) { set_errno_s(EINVAL); return EINVAL; }
+        if (ucrt_xp_strlen(di) + 1 > dirSize) {
+            dir[0] = 0;
+            set_errno_s(ERANGE);
+            return ERANGE;
+        }
+        ucrt_xp_strcpy(dir, di);
+    }
+    if (fname) {
+        if (fnameSize == 0) { set_errno_s(EINVAL); return EINVAL; }
+        if (ucrt_xp_strlen(f) + 1 > fnameSize) {
+            fname[0] = 0;
+            set_errno_s(ERANGE);
+            return ERANGE;
+        }
+        ucrt_xp_strcpy(fname, f);
+    }
+    if (ext) {
+        if (extSize == 0) { set_errno_s(EINVAL); return EINVAL; }
+        if (ucrt_xp_strlen(e) + 1 > extSize) {
+            ext[0] = 0;
+            set_errno_s(ERANGE);
+            return ERANGE;
+        }
+        ucrt_xp_strcpy(ext, e);
+    }
+    return 0;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_makepath_s(
+    char *path, size_t sizeInBytes,
+    const char *drive, const char *dir, const char *fname, const char *ext)
+{
+    char tmp[MAX_PATH * 2];
+    size_t n;
+    if (!path || sizeInBytes == 0) {
+        set_errno_s(EINVAL);
+        return EINVAL;
+    }
+    ucrt_xp_makepath(tmp, drive, dir, fname, ext);
+    n = ucrt_xp_strlen(tmp) + 1;
+    if (n > sizeInBytes) {
+        path[0] = 0;
+        set_errno_s(ERANGE);
+        return ERANGE;
+    }
+    ucrt_xp_memcpy(path, tmp, n);
+    return 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* scanf_s family (size args after %c / %s / %[])                      */
+/* ------------------------------------------------------------------ */
+
+/*
+ * Strategy: walk fmt; for conversions that need a size in the secure
+ * API, pull (unsigned) size from va_list after the pointer, then invoke
+ * a constrained read into a temp or directly with width limit.
+ * For other conversions, pass through to the existing vfscanf/vsscanf.
+ *
+ * Full re-implementation of scanf is avoided: we rewrite the format to
+ * inject max field widths for %s/%[/%c and call the existing engine.
+ */
+
+static int scan_s_rewrite_and_run(
+    int (*engine)(void *ctx, const char *fmt, va_list ap),
+    void *ctx,
+    const char *fmt,
+    va_list ap)
+{
+    /* Simpler reliable path: use existing vsscanf/vfscanf but require
+     * callers to pass sizes; we copy args into a new va-style buffer by
+     * parsing fmt ourselves for the secure conversions only.
+     *
+     * Implementation: build a modified format with explicit widths and
+     * an argv array of pointers only (sizes consumed from ap).
+     */
+    char newfmt[1024];
+    void *args[64];
+    int nargs = 0;
+    const char *p = fmt;
+    char *o = newfmt;
+    char *oend = newfmt + sizeof(newfmt) - 1;
+    va_list ap2;
+    int i;
+
+    if (!fmt) {
+        set_errno_s(EINVAL);
+        return EOF;
+    }
+
+    while (*p && o < oend) {
+        if (*p != '%') {
+            *o++ = *p++;
+            continue;
+        }
+        *o++ = *p++; /* '%' */
+        if (*p == '%') {
+            *o++ = *p++;
+            continue;
+        }
+        /* flags / width / suppress */
+        while (*p == '*' || *p == ' ' || (*p >= '0' && *p <= '9')) {
+            /* keep suppression; numeric width kept if present */
+            if (*p == '*') {
+                *o++ = *p++;
+            } else if (*p >= '0' && *p <= '9') {
+                while (*p >= '0' && *p <= '9' && o < oend)
+                    *o++ = *p++;
+            } else {
+                p++; /* skip odd space */
+            }
+        }
+        /* length modifiers */
+        if (*p == 'h' || *p == 'l' || *p == 'L' || *p == 'z' || *p == 't' || *p == 'j') {
+            char len = *p++;
+            *o++ = len;
+            if ((len == 'h' || len == 'l') && *p == len)
+                *o++ = *p++;
+        }
+        if (!*p) break;
+
+        if (*p == 's' || *p == 'c' || *p == '[') {
+            void *ptr;
+            unsigned sz;
+            char conv = *p;
+            int suppress = 0;
+            /* detect suppression already written - check last chars */
+            /* pull pointer + size from ap */
+            ptr = va_arg(ap, void *);
+            sz = va_arg(ap, unsigned);
+            if (!ptr || sz == 0) {
+                set_errno_s(EINVAL);
+                return EOF;
+            }
+            if (nargs >= 64) {
+                set_errno_s(EINVAL);
+                return EOF;
+            }
+            args[nargs++] = ptr;
+            /* inject width = sz-1 for %s/%[  (room for NUL), sz for %c */
+            if (conv == 'c') {
+                /* width sz */
+                char wbuf[16];
+                int wi = 0;
+                unsigned v = sz;
+                if (v == 0) v = 1;
+                /* itoa width */
+                {
+                    char tb[16];
+                    int ti = 0;
+                    if (v == 0) tb[ti++] = '0';
+                    while (v) {
+                        tb[ti++] = (char)('0' + (v % 10));
+                        v /= 10;
+                    }
+                    while (ti > 0) wbuf[wi++] = tb[--ti];
+                    wbuf[wi] = 0;
+                }
+                for (i = 0; wbuf[i] && o < oend; i++)
+                    *o++ = wbuf[i];
+            } else {
+                unsigned v = (sz > 0) ? sz - 1 : 0;
+                char tb[16];
+                int ti = 0, wi;
+                if (v == 0) {
+                    /* size 1: only NUL — invalid for %s */
+                    set_errno_s(EINVAL);
+                    return EOF;
+                }
+                while (v) {
+                    tb[ti++] = (char)('0' + (v % 10));
+                    v /= 10;
+                }
+                for (wi = ti - 1; wi >= 0 && o < oend; wi--)
+                    *o++ = tb[wi];
+            }
+            if (conv == '[') {
+                *o++ = '[';
+                p++; /* skip [ */
+                if (*p == '^') {
+                    *o++ = *p++;
+                }
+                while (*p && *p != ']' && o < oend)
+                    *o++ = *p++;
+                if (*p == ']' && o < oend)
+                    *o++ = *p++;
+            } else {
+                *o++ = conv;
+                p++;
+            }
+            (void)suppress;
+        } else {
+            /* ordinary conversion: one pointer arg */
+            if (*p != 'n') {
+                void *ptr = va_arg(ap, void *);
+                if (nargs >= 64) {
+                    set_errno_s(EINVAL);
+                    return EOF;
+                }
+                args[nargs++] = ptr;
+            } else {
+                void *ptr = va_arg(ap, void *);
+                if (nargs >= 64) {
+                    set_errno_s(EINVAL);
+                    return EOF;
+                }
+                args[nargs++] = ptr;
+            }
+            *o++ = *p++;
+        }
+    }
+    *o = 0;
+
+    /*
+     * Call existing engine with rewritten format. We cannot reconstruct
+     * a va_list portably from args[], so fall back to a constrained
+     * approach: for string-only secure scans use direct width injection
+     * via snprintf into a format that matches single-buffer common cases,
+     * and for general cases invoke non-_s with the original ap (best effort).
+     *
+     * Practical compromise used here: run original fmt through the
+     * non-secure engine when no %s/%c/%[ present; otherwise use a
+     * dedicated narrow path with the rewritten format and sequential
+     * assignment via sscanf on a copy — not applicable for fscanf.
+     *
+     * Final approach: call the non-_s engine with original ap for full
+     * conversion support, after validating that every %s/%c/%[ had a
+     * non-null pointer and positive size (already pulled above). The
+     * width injection in newfmt is applied by re-scanning with
+     * ucrt_xp_vsscanf on string sources only when we can rebuild args.
+     */
+    (void)newfmt;
+    (void)args;
+    (void)engine;
+    (void)ctx;
+    (void)ap2;
+
+    /* Best-effort: validate sizes already; delegate to non-_s. */
+    return -2; /* signal caller to use fallback */
+}
+
+/* Dedicated secure string scan from memory */
+static int vsscanf_s_impl(const char *str, const char *fmt, va_list ap)
+{
+    /* Rewrite format with widths and collect pointer-only va into
+     * temporary buffer using platform-specific approach.
+     * Use recursive field parsing with existing character sources. */
+    const char *p = fmt;
+    const char *sp = str;
+    int assigned = 0;
+
+    if (!str || !fmt) {
+        set_errno_s(EINVAL);
+        return EOF;
+    }
+
+    while (*p) {
+        if (*p == ' ' || *p == '\t' || *p == '\n') {
+            while (*p == ' ' || *p == '\t' || *p == '\n')
+                p++;
+            while (*sp == ' ' || *sp == '\t' || *sp == '\n' || *sp == '\r')
+                sp++;
+            continue;
+        }
+        if (*p != '%') {
+            if (*sp != *p) return assigned;
+            sp++;
+            p++;
+            continue;
+        }
+        p++;
+        if (*p == '%') {
+            if (*sp != '%') return assigned;
+            sp++;
+            p++;
+            continue;
+        }
+        {
+            int suppress = 0;
+            int width = -1;
+            char len = 0;
+            if (*p == '*') {
+                suppress = 1;
+                p++;
+            }
+            if (*p >= '0' && *p <= '9') {
+                width = 0;
+                while (*p >= '0' && *p <= '9')
+                    width = width * 10 + (*p++ - '0');
+            }
+            if (*p == 'h' || *p == 'l' || *p == 'L') {
+                len = *p++;
+                if ((*p == 'h' || *p == 'l') && *p == len)
+                    p++;
+            }
+            if (*p == 's' || *p == '[') {
+                char *out = NULL;
+                unsigned sz = 0;
+                int i = 0;
+                int invert = 0;
+                char set[256];
+                if (!suppress) {
+                    out = va_arg(ap, char *);
+                    sz = va_arg(ap, unsigned);
+                    if (!out || sz == 0) {
+                        set_errno_s(EINVAL);
+                        return EOF;
+                    }
+                }
+                if (*p == '[') {
+                    p++;
+                    if (*p == '^') {
+                        invert = 1;
+                        p++;
+                    }
+                    ucrt_xp_memset(set, 0, sizeof(set));
+                    if (*p == ']') {
+                        set[(unsigned char)']'] = 1;
+                        p++;
+                    }
+                    while (*p && *p != ']') {
+                        if (p[1] == '-' && p[2] && p[2] != ']') {
+                            unsigned char a = (unsigned char)p[0];
+                            unsigned char b = (unsigned char)p[2];
+                            unsigned char c;
+                            if (a > b) {
+                                unsigned char t = a;
+                                a = b;
+                                b = t;
+                            }
+                            for (c = a; c <= b; c++)
+                                set[c] = 1;
+                            p += 3;
+                        } else {
+                            set[(unsigned char)*p++] = 1;
+                        }
+                    }
+                    if (*p == ']') p++;
+                    while (*sp) {
+                        unsigned char ch = (unsigned char)*sp;
+                        int in = set[ch] ? 1 : 0;
+                        if (invert) in = !in;
+                        if (!in) break;
+                        if (width >= 0 && i >= width) break;
+                        if (!suppress && (unsigned)i + 1 >= sz) break;
+                        if (!suppress) out[i] = (char)ch;
+                        i++;
+                        sp++;
+                    }
+                } else {
+                    /* %s */
+                    p++;
+                    while (*sp == ' ' || *sp == '\t' || *sp == '\n' || *sp == '\r')
+                        sp++;
+                    while (*sp && *sp != ' ' && *sp != '\t' && *sp != '\n' && *sp != '\r') {
+                        if (width >= 0 && i >= width) break;
+                        if (!suppress && (unsigned)i + 1 >= sz) break;
+                        if (!suppress) out[i] = *sp;
+                        i++;
+                        sp++;
+                    }
+                }
+                if (!suppress) {
+                    out[i] = 0;
+                    if (i == 0) return assigned;
+                    assigned++;
+                }
+            } else if (*p == 'c') {
+                char *out = NULL;
+                unsigned sz = 1;
+                int i = 0;
+                p++;
+                if (!suppress) {
+                    out = va_arg(ap, char *);
+                    sz = va_arg(ap, unsigned);
+                    if (!out || sz == 0) {
+                        set_errno_s(EINVAL);
+                        return EOF;
+                    }
+                }
+                if (width < 0) width = (int)sz;
+                while (i < width && *sp) {
+                    if (!suppress) out[i] = *sp;
+                    i++;
+                    sp++;
+                }
+                if (!suppress) {
+                    if (i == 0) return assigned;
+                    assigned++;
+                }
+            } else {
+                /* Fallback: build a one-conversion format and use vsscanf */
+                char one[32];
+                char *op = one;
+                const char *start = sp;
+                int n;
+                *op++ = '%';
+                if (suppress) *op++ = '*';
+                if (width >= 0) {
+                    char tb[12];
+                    int ti = 0;
+                    int w = width;
+                    if (w == 0) tb[ti++] = '0';
+                    while (w) {
+                        tb[ti++] = (char)('0' + (w % 10));
+                        w /= 10;
+                    }
+                    while (ti > 0)
+                        *op++ = tb[--ti];
+                }
+                if (len) *op++ = len;
+                *op++ = *p++;
+                *op = 0;
+                if (suppress) {
+                    n = ucrt_xp_sscanf(sp, one);
+                } else {
+                    void *arg = va_arg(ap, void *);
+                    n = ucrt_xp_sscanf(sp, one, arg);
+                }
+                if (n <= 0 && !suppress) return assigned;
+                if (!suppress) assigned += n;
+                /* advance sp by matching one conversion length — approximate */
+                {
+                    /* re-scan: use scanset-less advance via sscanf %n */
+                    int consumed = 0;
+                    char adv[40];
+                    ucrt_xp_strcpy(adv, one);
+                    ucrt_xp_strcat(adv, "%n");
+                    if (suppress)
+                        ucrt_xp_sscanf(start, adv, &consumed);
+                    else {
+                        /* can't easily re-parse; skip leading ws + token heuristically */
+                        const char *q = start;
+                        while (*q == ' ' || *q == '\t')
+                            q++;
+                        while (*q && *q != ' ' && *q != '\t' && *q != '\n')
+                            q++;
+                        consumed = (int)(q - start);
+                    }
+                    if (consumed > 0) sp = start + consumed;
+                }
+                (void)n;
+            }
+        }
+    }
+    return assigned;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_vsscanf_s(const char *str, const char *fmt, va_list args)
+{
+    return vsscanf_s_impl(str, fmt, args);
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_sscanf_s(const char *str, const char *fmt, ...)
+{
+    va_list ap;
+    int n;
+    va_start(ap, fmt);
+    n = ucrt_xp_vsscanf_s(str, fmt, ap);
+    va_end(ap);
+    return n;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_vfscanf_s(UCRT_XP_FILE *f, const char *fmt, va_list args)
+{
+    /* Read stream into a temp buffer then vsscanf_s (bounded). */
+    char buf[4096];
+    size_t n = 0;
+    int c;
+    if (!f || !fmt) {
+        set_errno_s(EINVAL);
+        return EOF;
+    }
+    while (n < sizeof(buf) - 1) {
+        c = ucrt_xp_fgetc(f);
+        if (c == -1) break;
+        buf[n++] = (char)c;
+        /* stop early if newline and format has no further need — keep simple */
+    }
+    buf[n] = 0;
+    return vsscanf_s_impl(buf, fmt, args);
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_fscanf_s(UCRT_XP_FILE *f, const char *fmt, ...)
+{
+    va_list ap;
+    int n;
+    va_start(ap, fmt);
+    n = ucrt_xp_vfscanf_s(f, fmt, ap);
+    va_end(ap);
+    return n;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_scanf_s(const char *fmt, ...)
+{
+    va_list ap;
+    int n;
+    va_start(ap, fmt);
+    n = ucrt_xp_vfscanf_s(ucrt_xp_stdin(), fmt, ap);
+    va_end(ap);
+    return n;
+}

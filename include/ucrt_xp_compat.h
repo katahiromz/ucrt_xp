@@ -441,6 +441,20 @@
 #define qsort_s                   ucrt_xp_qsort_s
 #define bsearch_s                 ucrt_xp_bsearch_s
 
+#define freopen_s(p, path, m, s)  ucrt_xp_freopen_s(p, path, m, s)
+#define _itoa_s(v, b, n, r)       ucrt_xp_itoa_s(v, b, n, r)
+#define _ltoa_s(v, b, n, r)       ucrt_xp_ltoa_s(v, b, n, r)
+#define _ultoa_s(v, b, n, r)      ucrt_xp_ultoa_s(v, b, n, r)
+#define _i64toa_s(v, b, n, r)     ucrt_xp_i64toa_s(v, b, n, r)
+#define _ui64toa_s(v, b, n, r)    ucrt_xp_ui64toa_s(v, b, n, r)
+#define _splitpath_s              ucrt_xp_splitpath_s
+#define _makepath_s               ucrt_xp_makepath_s
+#define sscanf_s                  ucrt_xp_sscanf_s
+#define vsscanf_s                 ucrt_xp_vsscanf_s
+#define fscanf_s                  ucrt_xp_fscanf_s
+#define vfscanf_s                 ucrt_xp_vfscanf_s
+#define scanf_s                   ucrt_xp_scanf_s
+
 #endif /* UCRT_XP_USE_STD_NAMES */
 
 /* ------------------------------------------------------------------ */

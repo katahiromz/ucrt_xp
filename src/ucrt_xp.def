@@ -397,3 +397,17 @@ EXPORTS
     ucrt_xp_wcstombs_s                     @421
     ucrt_xp_qsort_s                        @422
     ucrt_xp_bsearch_s                      @423
+
+    ucrt_xp_freopen_s                      @424
+    ucrt_xp_itoa_s                         @425
+    ucrt_xp_ltoa_s                         @426
+    ucrt_xp_ultoa_s                        @427
+    ucrt_xp_i64toa_s                       @428
+    ucrt_xp_ui64toa_s                      @429
+    ucrt_xp_splitpath_s                    @430
+    ucrt_xp_makepath_s                     @431
+    ucrt_xp_vsscanf_s                      @432
+    ucrt_xp_sscanf_s                       @433
+    ucrt_xp_vfscanf_s                      @434
+    ucrt_xp_fscanf_s                       @435
+    ucrt_xp_scanf_s                        @436
