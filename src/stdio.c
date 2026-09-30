@@ -1089,3 +1089,55 @@ __declspec(dllexport) int __cdecl ucrt_xp_getchar(void)
 {
     return ucrt_xp_fgetc(ucrt_xp_stdin());
 }
+
+/* ------------------------------------------------------------------ */
+/* _findfirst / _findnext / _findclose                                 */
+/* ------------------------------------------------------------------ */
+
+typedef struct FindCtx {
+    HANDLE h;
+    int    first_done;
+    WIN32_FIND_DATAA fd;
+} FindCtx;
+
+__declspec(dllexport) intptr_t __cdecl ucrt_xp_findfirst(const char *filespec, UCRT_XP_FINDDATA *data)
+{
+    FindCtx *ctx;
+    if (!filespec || !data) return -1;
+    ctx = (FindCtx *)ucrt_xp_malloc(sizeof(FindCtx));
+    if (!ctx) return -1;
+    ctx->h = FindFirstFileA(filespec, &ctx->fd);
+    if (ctx->h == INVALID_HANDLE_VALUE) {
+        ucrt_xp_free(ctx);
+        return -1;
+    }
+    ctx->first_done = 0;
+    /* Fill data from first entry */
+    lstrcpynA(data->name, ctx->fd.cFileName, sizeof(data->name));
+    data->attrib = ctx->fd.dwFileAttributes;
+    data->size = ((__int64)ctx->fd.nFileSizeHigh << 32) | ctx->fd.nFileSizeLow;
+    data->time_write = 0; /* simplified */
+    ctx->first_done = 1;
+    return (intptr_t)ctx;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_findnext(intptr_t handle, UCRT_XP_FINDDATA *data)
+{
+    FindCtx *ctx = (FindCtx *)handle;
+    if (!ctx || !data || ctx->h == INVALID_HANDLE_VALUE) return -1;
+    if (!FindNextFileA(ctx->h, &ctx->fd)) return -1;
+    lstrcpynA(data->name, ctx->fd.cFileName, sizeof(data->name));
+    data->attrib = ctx->fd.dwFileAttributes;
+    data->size = ((__int64)ctx->fd.nFileSizeHigh << 32) | ctx->fd.nFileSizeLow;
+    data->time_write = 0;
+    return 0;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_findclose(intptr_t handle)
+{
+    FindCtx *ctx = (FindCtx *)handle;
+    if (!ctx) return -1;
+    if (ctx->h != INVALID_HANDLE_VALUE) FindClose(ctx->h);
+    ucrt_xp_free(ctx);
+    return 0;
+}

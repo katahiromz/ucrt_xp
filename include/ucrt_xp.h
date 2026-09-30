@@ -32,7 +32,7 @@ extern "C" {
  * changes (new functions appended at the end of this header).
  */
 #define UCRT_XP_ABI_MAJOR 1
-#define UCRT_XP_ABI_MINOR 5   /* 5: beginthread CRT attach + popen via COMSPEC */
+#define UCRT_XP_ABI_MINOR 7   /* 7: isw*/strtoll/rand_s/findfirst/asctime/dupenv */
 #define UCRT_XP_ABI_VERSION ((UCRT_XP_ABI_MAJOR << 16) | UCRT_XP_ABI_MINOR)
 
 typedef struct UCRT_XP_VERSION_INFO {
@@ -338,6 +338,29 @@ typedef struct UCRT_XP_STAT {
 
 __declspec(dllexport) int   __cdecl ucrt_xp_access(const char *path, int mode);
 __declspec(dllexport) int   __cdecl ucrt_xp_stat(const char *path, UCRT_XP_STAT *st);
+#ifndef _INTPTR_T_DEFINED
+#ifdef _WIN64
+typedef __int64 intptr_t;
+typedef unsigned __int64 uintptr_t;
+#else
+typedef int intptr_t;
+typedef unsigned int uintptr_t;
+#endif
+#define _INTPTR_T_DEFINED
+#endif
+
+
+typedef struct UCRT_XP_FINDDATA {
+    unsigned    attrib;
+    __int64     time_write;
+    __int64     size;
+    char        name[260];
+} UCRT_XP_FINDDATA;
+
+__declspec(dllexport) intptr_t __cdecl ucrt_xp_findfirst(const char *filespec, UCRT_XP_FINDDATA *data);
+__declspec(dllexport) int      __cdecl ucrt_xp_findnext(intptr_t handle, UCRT_XP_FINDDATA *data);
+__declspec(dllexport) int      __cdecl ucrt_xp_findclose(intptr_t handle);
+
 __declspec(dllexport) int   __cdecl ucrt_xp_mkdir(const char *path);
 __declspec(dllexport) int   __cdecl ucrt_xp_chdir(const char *path);
 __declspec(dllexport) char* __cdecl ucrt_xp_getcwd(char *buf, int maxlen);
@@ -555,6 +578,39 @@ __declspec(dllexport) int __cdecl ucrt_xp_isgraph(int c);
 __declspec(dllexport) int __cdecl ucrt_xp_toupper(int c);
 __declspec(dllexport) int __cdecl ucrt_xp_tolower(int c);
 
+/* MSVC / C99 ctype extensions */
+__declspec(dllexport) int __cdecl ucrt_xp_isascii(int c);
+__declspec(dllexport) int __cdecl ucrt_xp_toascii(int c);
+__declspec(dllexport) int __cdecl ucrt_xp_isblank(int c);
+__declspec(dllexport) int __cdecl ucrt_xp_iscsymf(int c);
+__declspec(dllexport) int __cdecl ucrt_xp_iscsym(int c);
+__declspec(dllexport) int __cdecl ucrt_xp__tolower(int c);
+__declspec(dllexport) int __cdecl ucrt_xp__toupper(int c);
+
+/* Wide ctype (C/ASCII range + CharUpper/Lower for high plane). */
+#ifndef _WINT_T_DEFINED
+typedef unsigned short wint_t;
+#define _WINT_T_DEFINED
+#endif
+__declspec(dllexport) int    __cdecl ucrt_xp_iswalpha(wint_t c);
+__declspec(dllexport) int    __cdecl ucrt_xp_iswdigit(wint_t c);
+__declspec(dllexport) int    __cdecl ucrt_xp_iswalnum(wint_t c);
+__declspec(dllexport) int    __cdecl ucrt_xp_iswspace(wint_t c);
+__declspec(dllexport) int    __cdecl ucrt_xp_iswupper(wint_t c);
+__declspec(dllexport) int    __cdecl ucrt_xp_iswlower(wint_t c);
+__declspec(dllexport) int    __cdecl ucrt_xp_iswpunct(wint_t c);
+__declspec(dllexport) int    __cdecl ucrt_xp_iswcntrl(wint_t c);
+__declspec(dllexport) int    __cdecl ucrt_xp_iswxdigit(wint_t c);
+__declspec(dllexport) int    __cdecl ucrt_xp_iswprint(wint_t c);
+__declspec(dllexport) int    __cdecl ucrt_xp_iswgraph(wint_t c);
+__declspec(dllexport) int    __cdecl ucrt_xp_iswblank(wint_t c);
+__declspec(dllexport) int    __cdecl ucrt_xp_iswascii(wint_t c);
+__declspec(dllexport) wint_t __cdecl ucrt_xp_towupper(wint_t c);
+__declspec(dllexport) wint_t __cdecl ucrt_xp_towlower(wint_t c);
+__declspec(dllexport) int    __cdecl ucrt_xp_iswcsymf(wint_t c);
+__declspec(dllexport) int    __cdecl ucrt_xp_iswcsym(wint_t c);
+
+
 /* ------------------------------------------------------------------ */
 /* <stdlib.h>: numeric conversion, rand, qsort/bsearch                 */
 /* ------------------------------------------------------------------ */
@@ -564,6 +620,17 @@ __declspec(dllexport) unsigned long __cdecl ucrt_xp_strtoul(const char *s, char 
 __declspec(dllexport) int           __cdecl ucrt_xp_atoi(const char *s);
 __declspec(dllexport) long          __cdecl ucrt_xp_atol(const char *s);
 __declspec(dllexport) double        __cdecl ucrt_xp_strtod(const char *s, char **endptr);
+__declspec(dllexport) __int64          __cdecl ucrt_xp_strtoll(const char *s, char **endptr, int base);
+__declspec(dllexport) unsigned __int64 __cdecl ucrt_xp_strtoull(const char *s, char **endptr, int base);
+__declspec(dllexport) __int64          __cdecl ucrt_xp_strtoi64(const char *s, char **endptr, int base);
+__declspec(dllexport) unsigned __int64 __cdecl ucrt_xp_strtoui64(const char *s, char **endptr, int base);
+__declspec(dllexport) float            __cdecl ucrt_xp_strtof(const char *s, char **endptr);
+__declspec(dllexport) double           __cdecl ucrt_xp_strtold(const char *s, char **endptr);
+__declspec(dllexport) double           __cdecl ucrt_xp_wtof(const wchar_t *s);
+__declspec(dllexport) int              __cdecl ucrt_xp_rand_s(unsigned int *randomValue);
+__declspec(dllexport) void             __cdecl ucrt_xp_searchenv(const char *filename, const char *varname, char *pathname);
+__declspec(dllexport) int              __cdecl ucrt_xp_dupenv_s(char **buffer, size_t *numberOfElements, const char *varname);
+
 __declspec(dllexport) double        __cdecl ucrt_xp_atof(const char *s);
 __declspec(dllexport) int           __cdecl ucrt_xp_abs(int v);
 __declspec(dllexport) long          __cdecl ucrt_xp_labs(long v);
@@ -673,6 +740,11 @@ __declspec(dllexport) BOOL __cdecl ucrt_xp_localtime(const UCRT_XP_TIME_T *timer
 __declspec(dllexport) int  __cdecl ucrt_xp_compute_yday(int year, int mon0, int mday);
 __declspec(dllexport) size_t __cdecl ucrt_xp_strftime(
     char *buf, size_t bufsize, const char *fmt, const UCRT_XP_TM *tm);
+__declspec(dllexport) char* __cdecl ucrt_xp_asctime(const UCRT_XP_TM *tm);
+__declspec(dllexport) char* __cdecl ucrt_xp_ctime(const UCRT_XP_TIME_T *timer);
+__declspec(dllexport) char* __cdecl ucrt_xp_strdate(char *buf);
+__declspec(dllexport) char* __cdecl ucrt_xp_strtime(char *buf);
+
 
 /* ------------------------------------------------------------------ */
 /* Vista-style synchronization (ABI 1.1)                               */

@@ -272,3 +272,55 @@ __declspec(dllexport) size_t __cdecl ucrt_xp_strftime(
     if (bufsize > 0) buf[(total < bufsize) ? total : bufsize - 1] = 0;
     return (total < bufsize) ? total : 0;
 }
+
+/* ------------------------------------------------------------------ */
+/* asctime / ctime / _strdate / _strtime (classic CRT forms)           */
+/* ------------------------------------------------------------------ */
+
+/* Non-reentrant static buffers, matching classic CRT (thread-unsafe by
+ * design of the original API). Prefer strftime + localtime for new code. */
+__declspec(dllexport) char* __cdecl ucrt_xp_asctime(const UCRT_XP_TM *tm)
+{
+    static char buf[32];
+    static const char *wday[7] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
+    static const char *mon[12] = {"Jan","Feb","Mar","Apr","May","Jun",
+                                  "Jul","Aug","Sep","Oct","Nov","Dec"};
+    int y;
+
+    if (!tm) return NULL;
+    y = tm->tm_year + 1900;
+    /* "Www Mmm dd hh:mm:ss yyyy\n" */
+    wsprintfA(buf, "%s %s %02d %02d:%02d:%02d %04d\n",
+              (tm->tm_wday >= 0 && tm->tm_wday < 7) ? wday[tm->tm_wday] : "???",
+              (tm->tm_mon >= 0 && tm->tm_mon < 12) ? mon[tm->tm_mon] : "???",
+              tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, y);
+    return buf;
+}
+
+__declspec(dllexport) char* __cdecl ucrt_xp_ctime(const UCRT_XP_TIME_T *timer)
+{
+    UCRT_XP_TM tm;
+    if (!timer) return NULL;
+    if (!ucrt_xp_localtime(timer, &tm)) return NULL;
+    return ucrt_xp_asctime(&tm);
+}
+
+__declspec(dllexport) char* __cdecl ucrt_xp_strdate(char *buf)
+{
+    SYSTEMTIME st;
+    if (!buf) return NULL;
+    GetLocalTime(&st);
+    /* MM/DD/YY */
+    wsprintfA(buf, "%02d/%02d/%02d", st.wMonth, st.wDay, st.wYear % 100);
+    return buf;
+}
+
+__declspec(dllexport) char* __cdecl ucrt_xp_strtime(char *buf)
+{
+    SYSTEMTIME st;
+    if (!buf) return NULL;
+    GetLocalTime(&st);
+    /* HH:MM:SS */
+    wsprintfA(buf, "%02d:%02d:%02d", st.wHour, st.wMinute, st.wSecond);
+    return buf;
+}

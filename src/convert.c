@@ -365,3 +365,210 @@ __declspec(dllexport) char* __cdecl ucrt_xp_ultoa(unsigned long value, char *str
 {
     return xtoa_unsigned(value, str, radix, 0);
 }
+
+/* ------------------------------------------------------------------ */
+/* 64-bit integer conversion, strtof, rand_s, searchenv, dupenv        */
+/* ------------------------------------------------------------------ */
+
+__declspec(dllexport) __int64 __cdecl ucrt_xp_strtoll(const char *s, char **endptr, int base)
+{
+    const char *p = s;
+    int neg = 0;
+    unsigned __int64 acc = 0;
+    int any = 0;
+
+    if (!s) { if (endptr) *endptr = (char *)s; return 0; }
+    while (ucrt_xp_isspace((unsigned char)*p)) p++;
+    if (*p == '+') p++;
+    else if (*p == '-') { neg = 1; p++; }
+
+    if ((base == 0 || base == 16) && p[0] == '0' && (p[1] == 'x' || p[1] == 'X')) {
+        p += 2; base = 16;
+    } else if (base == 0 && p[0] == '0') {
+        base = 8;
+    } else if (base == 0) {
+        base = 10;
+    }
+
+    for (; *p; p++) {
+        int digit;
+        char c = *p;
+        if (c >= '0' && c <= '9') digit = c - '0';
+        else if (c >= 'a' && c <= 'z') digit = c - 'a' + 10;
+        else if (c >= 'A' && c <= 'Z') digit = c - 'A' + 10;
+        else break;
+        if (digit >= base) break;
+        acc = acc * (unsigned __int64)base + (unsigned __int64)digit;
+        any = 1;
+    }
+    if (endptr) *endptr = (char *)(any ? p : s);
+    return neg ? -(__int64)acc : (__int64)acc;
+}
+
+__declspec(dllexport) unsigned __int64 __cdecl ucrt_xp_strtoull(const char *s, char **endptr, int base)
+{
+    const char *p = s;
+    int neg = 0;
+    unsigned __int64 acc = 0;
+    int any = 0;
+
+    if (!s) { if (endptr) *endptr = (char *)s; return 0; }
+    while (ucrt_xp_isspace((unsigned char)*p)) p++;
+    if (*p == '+') p++;
+    else if (*p == '-') { neg = 1; p++; }
+
+    if ((base == 0 || base == 16) && p[0] == '0' && (p[1] == 'x' || p[1] == 'X')) {
+        p += 2; base = 16;
+    } else if (base == 0 && p[0] == '0') {
+        base = 8;
+    } else if (base == 0) {
+        base = 10;
+    }
+
+    for (; *p; p++) {
+        int digit;
+        char c = *p;
+        if (c >= '0' && c <= '9') digit = c - '0';
+        else if (c >= 'a' && c <= 'z') digit = c - 'a' + 10;
+        else if (c >= 'A' && c <= 'Z') digit = c - 'A' + 10;
+        else break;
+        if (digit >= base) break;
+        acc = acc * (unsigned __int64)base + (unsigned __int64)digit;
+        any = 1;
+    }
+    if (endptr) *endptr = (char *)(any ? p : s);
+    return neg ? (unsigned __int64)(-(__int64)acc) : acc;
+}
+
+__declspec(dllexport) __int64 __cdecl ucrt_xp_strtoi64(const char *s, char **endptr, int base)
+{
+    return ucrt_xp_strtoll(s, endptr, base);
+}
+
+__declspec(dllexport) unsigned __int64 __cdecl ucrt_xp_strtoui64(const char *s, char **endptr, int base)
+{
+    return ucrt_xp_strtoull(s, endptr, base);
+}
+
+__declspec(dllexport) float __cdecl ucrt_xp_strtof(const char *s, char **endptr)
+{
+    return (float)ucrt_xp_strtod(s, endptr);
+}
+
+/* long double on MSVC x86 is 80-bit but often treated as double in
+ * software paths; map to double for XP portability. */
+__declspec(dllexport) double __cdecl ucrt_xp_strtold(const char *s, char **endptr)
+{
+    return ucrt_xp_strtod(s, endptr);
+}
+
+__declspec(dllexport) double __cdecl ucrt_xp_wtof(const wchar_t *s)
+{
+    char buf[512];
+    if (!s) return 0.0;
+    if (ucrt_xp_wide_to_ansi(s, buf, (int)sizeof(buf)) < 0) return 0.0;
+    return ucrt_xp_strtod(buf, NULL);
+}
+
+/* Cryptographically stronger than rand(): RtlGenRandom / SystemFunction036
+ * when available; otherwise falls back to multi-sample rand(). */
+typedef BOOLEAN (WINAPI *RtlGenRandom_fn)(PVOID, ULONG);
+
+static BOOL __cdecl init_rtlgenrandom(void *param)
+{
+    RtlGenRandom_fn *pp = (RtlGenRandom_fn *)param;
+    HMODULE adv = LoadLibraryA("advapi32.dll");
+    if (adv)
+        *pp = (RtlGenRandom_fn)GetProcAddress(adv, "SystemFunction036");
+    return TRUE;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_rand_s(unsigned int *randomValue)
+{
+    static RtlGenRandom_fn pRtlGenRandom = NULL;
+    static UCRT_XP_ONCE once = UCRT_XP_ONCE_INIT;
+
+    if (!randomValue) return 22; /* EINVAL */
+
+    ucrt_xp_once(&once, init_rtlgenrandom, &pRtlGenRandom);
+
+    if (pRtlGenRandom && pRtlGenRandom(randomValue, sizeof(unsigned int)))
+        return 0;
+
+    /* Fallback: stitch two rand() samples. */
+    {
+        unsigned int a = (unsigned int)ucrt_xp_rand();
+        unsigned int b = (unsigned int)ucrt_xp_rand();
+        *randomValue = (a << 16) ^ b ^ GetTickCount();
+    }
+    return 0;
+}
+
+/* _searchenv: look for filename in PATH (and optionally other env vars).
+ * Writes full path into pathname (assumed large enough, classic CRT). */
+__declspec(dllexport) void __cdecl ucrt_xp_searchenv(const char *filename, const char *varname, char *pathname)
+{
+    char envbuf[32768];
+    DWORD n;
+    char *tok, *ctx;
+    char try_path[MAX_PATH];
+
+    if (!filename || !pathname) return;
+    pathname[0] = 0;
+
+    /* First: current directory */
+    if (GetFileAttributesA(filename) != INVALID_FILE_ATTRIBUTES) {
+        if (GetFullPathNameA(filename, MAX_PATH, pathname, NULL) == 0)
+            lstrcpynA(pathname, filename, MAX_PATH);
+        return;
+    }
+
+    if (!varname) varname = "PATH";
+    n = GetEnvironmentVariableA(varname, envbuf, sizeof(envbuf));
+    if (n == 0 || n >= sizeof(envbuf)) return;
+
+    for (tok = envbuf; *tok; ) {
+        char *semi = ucrt_xp_strchr(tok, ';');
+        size_t len;
+        if (semi) { *semi = 0; }
+        len = ucrt_xp_strlen(tok);
+        if (len > 0 && len + 1 + ucrt_xp_strlen(filename) < MAX_PATH) {
+            lstrcpynA(try_path, tok, MAX_PATH);
+            if (try_path[len - 1] != '\\' && try_path[len - 1] != '/')
+                lstrcatA(try_path, "\\");
+            lstrcatA(try_path, filename);
+            if (GetFileAttributesA(try_path) != INVALID_FILE_ATTRIBUTES) {
+                if (GetFullPathNameA(try_path, MAX_PATH, pathname, NULL) == 0)
+                    lstrcpynA(pathname, try_path, MAX_PATH);
+                return;
+            }
+        }
+        if (!semi) break;
+        tok = semi + 1;
+    }
+    (void)ctx;
+}
+
+/* _dupenv_s: allocate a copy of the environment variable value. */
+__declspec(dllexport) int __cdecl ucrt_xp_dupenv_s(char **buffer, size_t *numberOfElements, const char *varname)
+{
+    char *val;
+    size_t len;
+    char *copy;
+
+    if (!buffer) return 22;
+    *buffer = NULL;
+    if (numberOfElements) *numberOfElements = 0;
+    if (!varname) return 22;
+
+    val = ucrt_xp_getenv(varname);
+    if (!val) return 0; /* not found: success with NULL buffer (MSVC behavior) */
+
+    len = ucrt_xp_strlen(val) + 1;
+    copy = (char *)ucrt_xp_malloc(len);
+    if (!copy) return 12; /* ENOMEM */
+    CopyMemory(copy, val, len);
+    *buffer = copy;
+    if (numberOfElements) *numberOfElements = len;
+    return 0;
+}

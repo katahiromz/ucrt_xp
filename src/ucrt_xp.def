@@ -274,3 +274,46 @@ EXPORTS
     ucrt_xp_wgetenv                        @303
     ucrt_xp_wputenv                        @304
     ucrt_xp_wsystem                        @305
+
+    ucrt_xp_isascii                        @306
+    ucrt_xp_toascii                        @307
+    ucrt_xp_isblank                        @308
+    ucrt_xp_iscsymf                        @309
+    ucrt_xp_iscsym                         @310
+    ucrt_xp__tolower                       @311
+    ucrt_xp__toupper                       @312
+
+    ucrt_xp_iswalpha                       @313
+    ucrt_xp_iswdigit                       @314
+    ucrt_xp_iswalnum                       @315
+    ucrt_xp_iswspace                       @316
+    ucrt_xp_iswupper                       @317
+    ucrt_xp_iswlower                       @318
+    ucrt_xp_iswpunct                       @319
+    ucrt_xp_iswcntrl                       @320
+    ucrt_xp_iswxdigit                      @321
+    ucrt_xp_iswprint                       @322
+    ucrt_xp_iswgraph                       @323
+    ucrt_xp_iswblank                       @324
+    ucrt_xp_iswascii                       @325
+    ucrt_xp_towupper                       @326
+    ucrt_xp_towlower                       @327
+    ucrt_xp_iswcsymf                       @328
+    ucrt_xp_iswcsym                        @329
+    ucrt_xp_strtoll                        @330
+    ucrt_xp_strtoull                       @331
+    ucrt_xp_strtoi64                       @332
+    ucrt_xp_strtoui64                      @333
+    ucrt_xp_strtof                         @334
+    ucrt_xp_strtold                        @335
+    ucrt_xp_wtof                           @336
+    ucrt_xp_rand_s                         @337
+    ucrt_xp_searchenv                      @338
+    ucrt_xp_dupenv_s                       @339
+    ucrt_xp_asctime                        @340
+    ucrt_xp_ctime                          @341
+    ucrt_xp_strdate                        @342
+    ucrt_xp_strtime                        @343
+    ucrt_xp_findfirst                      @344
+    ucrt_xp_findnext                       @345
+    ucrt_xp_findclose                      @346
