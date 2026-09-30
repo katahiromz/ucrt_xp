@@ -32,7 +32,7 @@ extern "C" {
  * changes (new functions appended at the end of this header).
  */
 #define UCRT_XP_ABI_MAJOR 1
-#define UCRT_XP_ABI_MINOR 11  /* 11: scanf_s/freopen_s/itoa_s/splitpath_s */
+#define UCRT_XP_ABI_MINOR 12  /* 12: wide scanf_s + improved fscanf_s */
 #define UCRT_XP_ABI_VERSION ((UCRT_XP_ABI_MAJOR << 16) | UCRT_XP_ABI_MINOR)
 
 typedef struct UCRT_XP_VERSION_INFO {
@@ -944,6 +944,14 @@ __declspec(dllexport) int __cdecl ucrt_xp_sscanf_s(const char *str, const char *
 __declspec(dllexport) int __cdecl ucrt_xp_vfscanf_s(UCRT_XP_FILE *f, const char *fmt, va_list args);
 __declspec(dllexport) int __cdecl ucrt_xp_fscanf_s(UCRT_XP_FILE *f, const char *fmt, ...);
 __declspec(dllexport) int __cdecl ucrt_xp_scanf_s(const char *fmt, ...);
+
+__declspec(dllexport) int __cdecl ucrt_xp_vswscanf_s(const wchar_t *str, const wchar_t *fmt, va_list args);
+__declspec(dllexport) int __cdecl ucrt_xp_swscanf_s(const wchar_t *str, const wchar_t *fmt, ...);
+__declspec(dllexport) int __cdecl ucrt_xp_vfwscanf_s(UCRT_XP_FILE *f, const wchar_t *fmt, va_list args);
+__declspec(dllexport) int __cdecl ucrt_xp_fwscanf_s(UCRT_XP_FILE *f, const wchar_t *fmt, ...);
+__declspec(dllexport) int __cdecl ucrt_xp_wscanf_s(const wchar_t *fmt, ...);
+__declspec(dllexport) int __cdecl ucrt_xp_snwprintf_s(wchar_t *buf, size_t bufsz, size_t count, const wchar_t *fmt, ...);
+
 
 
 #ifdef __cplusplus

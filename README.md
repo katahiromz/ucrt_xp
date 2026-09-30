@@ -99,4 +99,4 @@ Targets XP subsystem (`5.01`) when built with MSVC.
 3. Breaking change → bump `UCRT_XP_ABI_MAJOR` and ship a new DLL name.
 4. Every new export gets the next ordinal in `ucrt_xp.def`.
 
-Current ABI: **1.11** (`UCRT_XP_ABI_MAJOR.MINOR`).
+Current ABI: **1.12** (`UCRT_XP_ABI_MAJOR.MINOR`).

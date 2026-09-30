@@ -411,3 +411,10 @@ EXPORTS
     ucrt_xp_vfscanf_s                      @434
     ucrt_xp_fscanf_s                       @435
     ucrt_xp_scanf_s                        @436
+
+    ucrt_xp_vswscanf_s                     @437
+    ucrt_xp_swscanf_s                      @438
+    ucrt_xp_vfwscanf_s                     @439
+    ucrt_xp_fwscanf_s                      @440
+    ucrt_xp_wscanf_s                       @441
+    ucrt_xp_snwprintf_s                    @442

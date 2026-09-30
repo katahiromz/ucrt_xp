@@ -455,6 +455,13 @@
 #define vfscanf_s                 ucrt_xp_vfscanf_s
 #define scanf_s                   ucrt_xp_scanf_s
 
+#define swscanf_s                 ucrt_xp_swscanf_s
+#define vswscanf_s                ucrt_xp_vswscanf_s
+#define fwscanf_s                 ucrt_xp_fwscanf_s
+#define vfwscanf_s                ucrt_xp_vfwscanf_s
+#define wscanf_s                  ucrt_xp_wscanf_s
+#define _snwprintf_s              ucrt_xp_snwprintf_s
+
 #endif /* UCRT_XP_USE_STD_NAMES */
 
 /* ------------------------------------------------------------------ */
