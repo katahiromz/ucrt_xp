@@ -14,10 +14,10 @@ ucrt_xp centralizes those pieces behind a version-checked, XP-safe ABI.
 
 ```c
 #define UCRT_XP_USE_STD_NAMES
+#define UCRT_XP_IMPLEMENT_AUTOSTART // For one source only
 #include "ucrt_xp_compat.h"
 
 int main(void) {
-    ucrt_xp_init(UCRT_XP_ABI_VERSION);  /* or UCRT_XP_IMPLEMENT_AUTOSTART */
     printf("hello %d\n", 42);
     return 0;
 }
@@ -25,6 +25,10 @@ int main(void) {
 
 ```cmake
 add_subdirectory(ucrt_xp)          # or link the prebuilt DLL
+
+# app.exe
+add_executable(app ...)
+target_compile_definitions(app PRIVATE UCRT_XP_BUILD_DLL)
 target_link_libraries(app ucrt_xp) # or ucrt_xp_static
 ```
 
