@@ -266,3 +266,44 @@ __declspec(dllexport) size_t __cdecl ucrt_xp_strnlen(const char *s, size_t maxle
     }
     return maxlen;
 }
+
+/* ------------------------------------------------------------------ */
+/* memccpy, strlwr, strupr                                              */
+/* ------------------------------------------------------------------ */
+
+/* Copy bytes from src to dst, stopping after the first occurrence of c
+ * (included) or after n bytes, whichever comes first. Returns a pointer
+ * to the byte after the copy of c, or NULL if c was not found within n.
+ * Classic MSVC/Unix memccpy semantics. */
+__declspec(dllexport) void* __cdecl ucrt_xp_memccpy(void *dst, const void *src, int c, size_t n)
+{
+    unsigned char *d = (unsigned char *)dst;
+    const unsigned char *s = (const unsigned char *)src;
+    unsigned char uc = (unsigned char)c;
+    size_t i;
+
+    if (!dst || !src || n == 0) return NULL;
+    for (i = 0; i < n; i++) {
+        d[i] = s[i];
+        if (s[i] == uc) return (void *)(d + i + 1);
+    }
+    return NULL;
+}
+
+/* In-place lowercase conversion (MSVC _strlwr). Uses CharLowerA which
+ * respects the system ANSI code page; for full locale control prefer
+ * the _l variant or LCMapString. Returns the same pointer. */
+__declspec(dllexport) char* __cdecl ucrt_xp_strlwr(char *s)
+{
+    if (!s) return s;
+    CharLowerA(s);
+    return s;
+}
+
+/* In-place uppercase conversion (MSVC _strupr). */
+__declspec(dllexport) char* __cdecl ucrt_xp_strupr(char *s)
+{
+    if (!s) return s;
+    CharUpperA(s);
+    return s;
+}

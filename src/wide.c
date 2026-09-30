@@ -1139,3 +1139,92 @@ __declspec(dllexport) wchar_t* __cdecl ucrt_xp_wmemchr(const wchar_t *buf, wchar
     }
     return NULL;
 }
+
+/* ------------------------------------------------------------------ */
+/* wcsxfrm / wcsxfrm_l (wide collation transform)                      */
+/* ------------------------------------------------------------------ */
+
+/* Wide analogue of strxfrm. Uses LCMapStringW(LCMAP_SORTKEY). Sort keys
+ * are sequences of bytes, but the classic CRT stores them as wchar_t
+ * units (each byte zero-extended). We follow that convention so that
+ * wcscmp on the results matches wcscoll ordering. */
+__declspec(dllexport) size_t __cdecl ucrt_xp_wcsxfrm_l(
+    wchar_t *dest, const wchar_t *src, size_t n, ucrt_xp_locale_t loc)
+{
+    LCID lcid = ucrt_xp__locale_lcid(loc);
+    int needed_bytes;
+    size_t needed_wchars;
+    size_t i;
+
+    if (!src) {
+        if (dest && n > 0) dest[0] = 0;
+        return 0;
+    }
+
+    needed_bytes = LCMapStringW(lcid, LCMAP_SORTKEY, src, -1, NULL, 0);
+    if (needed_bytes <= 0) {
+        size_t len = ucrt_xp_wcslen(src);
+        if (dest && n > 0) {
+            size_t copy = (len < n - 1) ? len : n - 1;
+            if (copy) CopyMemory(dest, src, copy * sizeof(wchar_t));
+            dest[copy] = 0;
+        }
+        return len;
+    }
+
+    /* needed_bytes includes the terminating 0 byte of the sort key. */
+    needed_wchars = (size_t)needed_bytes; /* each byte -> one wchar_t */
+
+    if (!dest || n == 0) {
+        return needed_wchars - 1;
+    }
+
+    if (needed_wchars > n) {
+        /* Partial key: map into a temporary byte buffer then widen. */
+        char *tmp = (char *)ucrt_xp_malloc(needed_bytes);
+        if (tmp) {
+            LCMapStringW(lcid, LCMAP_SORTKEY, src, -1, (LPWSTR)tmp, needed_bytes);
+            for (i = 0; i < n - 1 && i < (size_t)needed_bytes - 1; i++)
+                dest[i] = (wchar_t)(unsigned char)tmp[i];
+            dest[n - 1] = 0;
+            ucrt_xp_free(tmp);
+        } else if (n > 0) {
+            dest[0] = 0;
+        }
+        return needed_wchars - 1;
+    }
+
+    {
+        char *tmp = (char *)ucrt_xp_malloc(needed_bytes);
+        if (!tmp) {
+            if (n > 0) dest[0] = 0;
+            return needed_wchars - 1;
+        }
+        LCMapStringW(lcid, LCMAP_SORTKEY, src, -1, (LPWSTR)tmp, needed_bytes);
+        for (i = 0; i < (size_t)needed_bytes; i++)
+            dest[i] = (wchar_t)(unsigned char)tmp[i];
+        ucrt_xp_free(tmp);
+    }
+    return needed_wchars - 1;
+}
+
+__declspec(dllexport) size_t __cdecl ucrt_xp_wcsxfrm(
+    wchar_t *dest, const wchar_t *src, size_t n)
+{
+    return ucrt_xp_wcsxfrm_l(dest, src, n, NULL);
+}
+
+/* In-place wide lowercase / uppercase (MSVC _wcslwr / _wcsupr). */
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcslwr(wchar_t *s)
+{
+    if (!s) return s;
+    CharLowerW(s);
+    return s;
+}
+
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcsupr(wchar_t *s)
+{
+    if (!s) return s;
+    CharUpperW(s);
+    return s;
+}

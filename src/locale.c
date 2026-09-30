@@ -215,3 +215,83 @@ __declspec(dllexport) int __cdecl ucrt_xp_tolower_l(int c, ucrt_xp_locale_t loc)
     (void)use_loc;
     return (unsigned char)buf[0];
 }
+
+/* ------------------------------------------------------------------ */
+/* strcoll / strxfrm (locale-aware collation)                          */
+/* ------------------------------------------------------------------ */
+
+/* Locale-aware string comparison (C89 strcoll). Uses CompareStringA
+ * without NORM_IGNORECASE so diacritics / code-page ordering match the
+ * locale's SORTKEY rules. Returns <0 / 0 / >0 like strcmp. */
+__declspec(dllexport) int __cdecl ucrt_xp_strcoll_l(
+    const char *a, const char *b, ucrt_xp_locale_t loc)
+{
+    ucrt_xp_locale_t use_loc = loc ? loc : ucrt_xp_locale_get_thread();
+    LCID lcid = use_loc ? use_loc->lcid : LOCALE_USER_DEFAULT;
+    int r;
+    if (!a || !b) return (a == b) ? 0 : (a ? 1 : -1);
+    r = CompareStringA(lcid, 0, a, -1, b, -1);
+    if (r == 0) {
+        /* CompareString failure (rare) - fall back to byte compare. */
+        return ucrt_xp_strcmp(a, b);
+    }
+    return r - CSTR_EQUAL;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_strcoll(const char *a, const char *b)
+{
+    return ucrt_xp_strcoll_l(a, b, NULL);
+}
+
+/* Transform src into a form that can be compared with strcmp to yield
+ * the same ordering as strcoll. Uses LCMapStringA(LCMAP_SORTKEY).
+ * If n == 0 or dest == NULL, returns the number of bytes needed
+ * (including the terminating 0). Otherwise copies at most n bytes and
+ * returns the length that would have been written (excluding the
+ * terminating 0 when the result fitted, matching classic CRT). */
+__declspec(dllexport) size_t __cdecl ucrt_xp_strxfrm_l(
+    char *dest, const char *src, size_t n, ucrt_xp_locale_t loc)
+{
+    ucrt_xp_locale_t use_loc = loc ? loc : ucrt_xp_locale_get_thread();
+    LCID lcid = use_loc ? use_loc->lcid : LOCALE_USER_DEFAULT;
+    int needed;
+
+    if (!src) {
+        if (dest && n > 0) dest[0] = 0;
+        return 0;
+    }
+
+    /* Query required size first (includes terminating 0 for SORTKEY). */
+    needed = LCMapStringA(lcid, LCMAP_SORTKEY, src, -1, NULL, 0);
+    if (needed <= 0) {
+        /* Fallback: identity transform via strcpy semantics. */
+        size_t len = ucrt_xp_strlen(src);
+        if (dest && n > 0) {
+            size_t copy = (len < n - 1) ? len : n - 1;
+            if (copy) CopyMemory(dest, src, copy);
+            dest[copy] = 0;
+        }
+        return len;
+    }
+
+    if (!dest || n == 0) {
+        return (size_t)(needed - 1); /* exclude the terminating 0 */
+    }
+
+    if ((size_t)needed > n) {
+        /* Not enough room - still produce a partial key so strcmp is
+         * defined, then return the full required length. */
+        LCMapStringA(lcid, LCMAP_SORTKEY, src, -1, dest, (int)n);
+        if (n > 0) dest[n - 1] = 0;
+        return (size_t)(needed - 1);
+    }
+
+    LCMapStringA(lcid, LCMAP_SORTKEY, src, -1, dest, (int)n);
+    return (size_t)(needed - 1);
+}
+
+__declspec(dllexport) size_t __cdecl ucrt_xp_strxfrm(
+    char *dest, const char *src, size_t n)
+{
+    return ucrt_xp_strxfrm_l(dest, src, n, NULL);
+}

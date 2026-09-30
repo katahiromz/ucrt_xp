@@ -181,6 +181,11 @@
 #define _stricmp(a, b)            ucrt_xp_stricmp(a, b)
 #define _strnicmp(a, b, n)        ucrt_xp_strnicmp(a, b, n)
 #define _strdup(s)                ucrt_xp_strdup(s)
+#define memccpy(d, s, c, n)       ucrt_xp_memccpy(d, s, c, n)
+#define _strlwr(s)                ucrt_xp_strlwr(s)
+#define _strupr(s)                ucrt_xp_strupr(s)
+#define strcoll(a, b)             ucrt_xp_strcoll(a, b)
+#define strxfrm(d, s, n)          ucrt_xp_strxfrm(d, s, n)
 
 /* ------------------------------------------------------------------ */
 /* <ctype.h>                                                          */
@@ -254,6 +259,9 @@
 #define _wopen(path, oflag, pmode) ucrt_xp_wopen(path, oflag, pmode)
 #define _wfopen(path, mode)       ucrt_xp_wfopen(path, mode)
 #define _wcsicmp(a, b)            ucrt_xp_wcsicmp(a, b)
+#define wcsxfrm(d, s, n)          ucrt_xp_wcsxfrm(d, s, n)
+#define _wcslwr(s)                ucrt_xp_wcslwr(s)
+#define _wcsupr(s)                ucrt_xp_wcsupr(s)
 
 #endif /* UCRT_XP_USE_STD_NAMES */
 

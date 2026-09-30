@@ -32,7 +32,7 @@ extern "C" {
  * changes (new functions appended at the end of this header).
  */
 #define UCRT_XP_ABI_MAJOR 1
-#define UCRT_XP_ABI_MINOR 1   /* 1: added Vista-style sync API (see end of file) */
+#define UCRT_XP_ABI_MINOR 2   /* 2: added strcoll/strxfrm/strlwr/strupr/memccpy/wcsxfrm */
 #define UCRT_XP_ABI_VERSION ((UCRT_XP_ABI_MAJOR << 16) | UCRT_XP_ABI_MINOR)
 
 typedef struct UCRT_XP_VERSION_INFO {
@@ -198,6 +198,12 @@ __declspec(dllexport) BOOL __cdecl ucrt_xp_locale_get_lconv(
     ucrt_xp_locale_t loc, UCRT_XP_LCONV *out);
 __declspec(dllexport) int __cdecl ucrt_xp_toupper_l(int c, ucrt_xp_locale_t loc);
 __declspec(dllexport) int __cdecl ucrt_xp_tolower_l(int c, ucrt_xp_locale_t loc);
+
+/* Locale-aware collation (C89 strcoll / strxfrm). */
+__declspec(dllexport) int    __cdecl ucrt_xp_strcoll_l(const char *a, const char *b, ucrt_xp_locale_t loc);
+__declspec(dllexport) int    __cdecl ucrt_xp_strcoll(const char *a, const char *b);
+__declspec(dllexport) size_t __cdecl ucrt_xp_strxfrm_l(char *dest, const char *src, size_t n, ucrt_xp_locale_t loc);
+__declspec(dllexport) size_t __cdecl ucrt_xp_strxfrm(char *dest, const char *src, size_t n);
 
 /* ------------------------------------------------------------------ */
 /* Exception trampoline                                                */
@@ -412,6 +418,12 @@ __declspec(dllexport) int    __cdecl ucrt_xp_wcsicmp_l(
 __declspec(dllexport) int __cdecl ucrt_xp_wcsicmp(
     const wchar_t *a, const wchar_t *b);
 
+/* Wide collation transform (C89 wcsxfrm) and in-place case fold. */
+__declspec(dllexport) size_t   __cdecl ucrt_xp_wcsxfrm_l(wchar_t *dest, const wchar_t *src, size_t n, ucrt_xp_locale_t loc);
+__declspec(dllexport) size_t   __cdecl ucrt_xp_wcsxfrm(wchar_t *dest, const wchar_t *src, size_t n);
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcslwr(wchar_t *s);
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcsupr(wchar_t *s);
+
 /* UTF-16 <-> ANSI (current locale's code page) conversion helpers. On
  * failure both return -1; on success, the number of wchar_t/char units
  * written (excluding the NUL). Passing out=NULL/outcap=0 returns the
@@ -483,6 +495,13 @@ __declspec(dllexport) size_t __cdecl ucrt_xp_strnlen(const char *s, size_t maxle
 /* Reentrant strtok - see string.c's comment on why this takes an
  * explicit saveptr instead of the classic CRT's hidden internal state. */
 __declspec(dllexport) char*  __cdecl ucrt_xp_strtok_r(char *str, const char *delim, char **saveptr);
+
+/* memccpy: copy until byte c (inclusive) or n bytes; returns ptr past c or NULL. */
+__declspec(dllexport) void*  __cdecl ucrt_xp_memccpy(void *dst, const void *src, int c, size_t n);
+
+/* In-place case conversion (MSVC _strlwr / _strupr). */
+__declspec(dllexport) char*  __cdecl ucrt_xp_strlwr(char *s);
+__declspec(dllexport) char*  __cdecl ucrt_xp_strupr(char *s);
 
 /* ------------------------------------------------------------------ */
 /* <ctype.h> family (fixed "C"/ASCII locale - see ctype.c)             */

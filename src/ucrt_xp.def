@@ -219,3 +219,15 @@ EXPORTS
     ucrt_xp_wmemset                        @251
     ucrt_xp_wmemcmp                        @252
     ucrt_xp_wmemchr                        @253
+
+    ucrt_xp_memccpy                        @254
+    ucrt_xp_strlwr                         @255
+    ucrt_xp_strupr                         @256
+    ucrt_xp_strcoll_l                      @257
+    ucrt_xp_strcoll                        @258
+    ucrt_xp_strxfrm_l                      @259
+    ucrt_xp_strxfrm                        @260
+    ucrt_xp_wcsxfrm_l                      @261
+    ucrt_xp_wcsxfrm                        @262
+    ucrt_xp_wcslwr                         @263
+    ucrt_xp_wcsupr                         @264
