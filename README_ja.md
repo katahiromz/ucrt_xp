@@ -1,7 +1,7 @@
 ﻿(Japanese)
 ---
 
-# Universal CRT for Windows XP
+# ucrt_xp by katahiromz
 
 ## そもそもUCRTとは
 
