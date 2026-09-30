@@ -1307,3 +1307,117 @@ __declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcsrev(wchar_t *s)
     }
     return s;
 }
+
+/* ------------------------------------------------------------------ */
+/* Wide filesystem / process helpers                                   */
+/* ------------------------------------------------------------------ */
+
+__declspec(dllexport) int __cdecl ucrt_xp_waccess(const wchar_t *path, int mode)
+{
+    DWORD attrs;
+    if (!path) return -1;
+    attrs = GetFileAttributesW(path);
+    if (attrs == INVALID_FILE_ATTRIBUTES) return -1;
+    if ((mode & 2) && (attrs & FILE_ATTRIBUTE_READONLY)) return -1;
+    (void)mode;
+    return 0;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_wmkdir(const wchar_t *path)
+{
+    if (!path) return -1;
+    return CreateDirectoryW(path, NULL) ? 0 : -1;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_wchdir(const wchar_t *path)
+{
+    if (!path) return -1;
+    return SetCurrentDirectoryW(path) ? 0 : -1;
+}
+
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wgetcwd(wchar_t *buf, int maxlen)
+{
+    DWORD n;
+    if (!buf || maxlen <= 0) return NULL;
+    n = GetCurrentDirectoryW((DWORD)maxlen, buf);
+    if (n == 0 || n >= (DWORD)maxlen) return NULL;
+    return buf;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_wremove(const wchar_t *path)
+{
+    if (!path) return -1;
+    if (DeleteFileW(path)) return 0;
+    if (RemoveDirectoryW(path)) return 0;
+    return -1;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_wrename(const wchar_t *oldpath, const wchar_t *newpath)
+{
+    if (!oldpath || !newpath) return -1;
+    return MoveFileW(oldpath, newpath) ? 0 : -1;
+}
+
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wgetenv(const wchar_t *name)
+{
+    /* Non-reentrant: static buffer, classic CRT style. */
+    static wchar_t buf[32768];
+    DWORD n;
+    if (!name) return NULL;
+    n = GetEnvironmentVariableW(name, buf, 32768);
+    if (n == 0 || n >= 32768) return NULL;
+    return buf;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_wputenv(const wchar_t *envstring)
+{
+    wchar_t *copy, *eq;
+    size_t len;
+    BOOL ok;
+    if (!envstring || !*envstring) return -1;
+    len = ucrt_xp_wcslen(envstring);
+    copy = (wchar_t *)ucrt_xp_malloc((len + 1) * sizeof(wchar_t));
+    if (!copy) return -1;
+    CopyMemory(copy, envstring, (len + 1) * sizeof(wchar_t));
+    eq = ucrt_xp_wcschr(copy, L'=');
+    if (!eq) {
+        ucrt_xp_free(copy);
+        return -1;
+    }
+    *eq = 0;
+    ok = SetEnvironmentVariableW(copy, (eq[1] == 0) ? NULL : (eq + 1));
+    ucrt_xp_free(copy);
+    return ok ? 0 : -1;
+}
+
+__declspec(dllexport) int __cdecl ucrt_xp_wsystem(const wchar_t *command)
+{
+    STARTUPINFOW si;
+    PROCESS_INFORMATION pi;
+    DWORD code = 0;
+    wchar_t *cmd_copy;
+    size_t len;
+
+    if (!command) {
+        return GetEnvironmentVariableW(L"COMSPEC", NULL, 0) > 0 ? 1 : 0;
+    }
+    len = ucrt_xp_wcslen(command);
+    cmd_copy = (wchar_t *)ucrt_xp_malloc((len + 1) * sizeof(wchar_t));
+    if (!cmd_copy) return -1;
+    CopyMemory(cmd_copy, command, (len + 1) * sizeof(wchar_t));
+
+    ZeroMemory(&si, sizeof(si));
+    si.cb = sizeof(si);
+    ZeroMemory(&pi, sizeof(pi));
+
+    if (!CreateProcessW(NULL, cmd_copy, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+        ucrt_xp_free(cmd_copy);
+        return -1;
+    }
+    ucrt_xp_free(cmd_copy);
+    WaitForSingleObject(pi.hProcess, INFINITE);
+    GetExitCodeProcess(pi.hProcess, &code);
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+    return (int)code;
+}

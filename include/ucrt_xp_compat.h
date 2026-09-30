@@ -76,6 +76,33 @@
 #define atexit(fn)                ucrt_xp_atexit(fn)
 #define getenv(n)                 ucrt_xp_getenv(n)
 #define system(c)                 ucrt_xp_system(c)
+#define _getpid()                 ucrt_xp_getpid()
+#define getpid()                  ucrt_xp_getpid()
+#define _putenv(s)                ucrt_xp_putenv(s)
+#define _pipe(pd, sz, tm)         ucrt_xp_pipe(pd, sz, tm)
+#define _popen(c, m)              ucrt_xp_popen(c, m)
+#define _pclose(f)                ucrt_xp_pclose(f)
+#define popen(c, m)               ucrt_xp_popen(c, m)
+#define pclose(f)                 ucrt_xp_pclose(f)
+#define _spawnv(m, c, a)          ucrt_xp_spawnv(m, c, a)
+#define _spawnvp(m, c, a)         ucrt_xp_spawnvp(m, c, a)
+#define _spawnl                   ucrt_xp_spawnl
+#define _spawnlp                  ucrt_xp_spawnlp
+#define _execv(c, a)              ucrt_xp_execv(c, a)
+#define _execvp(c, a)             ucrt_xp_execvp(c, a)
+#define _execl                    ucrt_xp_execl
+#define _execlp                   ucrt_xp_execlp
+#define _beginthread              ucrt_xp_beginthread
+#define _beginthreadex            ucrt_xp_beginthreadex
+#define _endthread()              ucrt_xp_endthread()
+#define _endthreadex(r)           ucrt_xp_endthreadex(r)
+#ifndef P_WAIT
+#define P_WAIT    UCRT_XP_P_WAIT
+#define P_NOWAIT  UCRT_XP_P_NOWAIT
+#define P_OVERLAY UCRT_XP_P_OVERLAY
+#define P_NOWAITO UCRT_XP_P_NOWAITO
+#define P_DETACH  UCRT_XP_P_DETACH
+#endif
 #define _itoa(v, s, r)            ucrt_xp_itoa(v, s, r)
 #define _ltoa(v, s, r)            ucrt_xp_ltoa(v, s, r)
 #define _ultoa(v, s, r)           ucrt_xp_ultoa(v, s, r)
@@ -272,6 +299,15 @@
 #define _wcsicoll(a, b)           ucrt_xp_wcsicoll(a, b)
 #define _wcsnicoll(a, b, n)       ucrt_xp_wcsnicoll(a, b, n)
 #define _wcsrev(s)                ucrt_xp_wcsrev(s)
+#define _waccess(p, m)            ucrt_xp_waccess(p, m)
+#define _wmkdir(p)                ucrt_xp_wmkdir(p)
+#define _wchdir(p)                ucrt_xp_wchdir(p)
+#define _wgetcwd(b, n)            ucrt_xp_wgetcwd(b, n)
+#define _wremove(p)               ucrt_xp_wremove(p)
+#define _wrename(o, n)            ucrt_xp_wrename(o, n)
+#define _wgetenv(n)               ucrt_xp_wgetenv(n)
+#define _wputenv(s)               ucrt_xp_wputenv(s)
+#define _wsystem(c)               ucrt_xp_wsystem(c)
 
 #endif /* UCRT_XP_USE_STD_NAMES */
 

@@ -32,7 +32,7 @@ extern "C" {
  * changes (new functions appended at the end of this header).
  */
 #define UCRT_XP_ABI_MAJOR 1
-#define UCRT_XP_ABI_MINOR 3   /* 3: wcscoll/stricoll/memicmp/strrev/strcasecmp family */
+#define UCRT_XP_ABI_MINOR 4   /* 4: process/pipe/popen/spawn/exec/beginthread + wide fs */
 #define UCRT_XP_ABI_VERSION ((UCRT_XP_ABI_MAJOR << 16) | UCRT_XP_ABI_MINOR)
 
 typedef struct UCRT_XP_VERSION_INFO {
@@ -439,6 +439,17 @@ __declspec(dllexport) int      __cdecl ucrt_xp_wcsnicoll_l(const wchar_t *a, con
 __declspec(dllexport) int      __cdecl ucrt_xp_wcsnicoll(const wchar_t *a, const wchar_t *b, size_t n);
 __declspec(dllexport) wchar_t* __cdecl ucrt_xp_wcsrev(wchar_t *s);
 
+/* Wide filesystem and process helpers. */
+__declspec(dllexport) int      __cdecl ucrt_xp_waccess(const wchar_t *path, int mode);
+__declspec(dllexport) int      __cdecl ucrt_xp_wmkdir(const wchar_t *path);
+__declspec(dllexport) int      __cdecl ucrt_xp_wchdir(const wchar_t *path);
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wgetcwd(wchar_t *buf, int maxlen);
+__declspec(dllexport) int      __cdecl ucrt_xp_wremove(const wchar_t *path);
+__declspec(dllexport) int      __cdecl ucrt_xp_wrename(const wchar_t *oldpath, const wchar_t *newpath);
+__declspec(dllexport) wchar_t* __cdecl ucrt_xp_wgetenv(const wchar_t *name);
+__declspec(dllexport) int      __cdecl ucrt_xp_wputenv(const wchar_t *envstring);
+__declspec(dllexport) int      __cdecl ucrt_xp_wsystem(const wchar_t *command);
+
 /* UTF-16 <-> ANSI (current locale's code page) conversion helpers. On
  * failure both return -1; on success, the number of wchar_t/char units
  * written (excluding the NUL). Passing out=NULL/outcap=0 returns the
@@ -590,6 +601,50 @@ __declspec(dllexport) void __cdecl ucrt_xp_abort(void);
 
 __declspec(dllexport) char* __cdecl ucrt_xp_getenv(const char *name);
 __declspec(dllexport) int   __cdecl ucrt_xp_system(const char *command);
+
+/* process identity / environment / pipes / popen */
+__declspec(dllexport) int __cdecl ucrt_xp_getpid(void);
+__declspec(dllexport) int __cdecl ucrt_xp_putenv(const char *envstring);
+__declspec(dllexport) int __cdecl ucrt_xp_pipe(int *pipedes, unsigned int psize, int text_mode);
+__declspec(dllexport) UCRT_XP_FILE* __cdecl ucrt_xp_popen(const char *command, const char *mode);
+__declspec(dllexport) int __cdecl ucrt_xp_pclose(UCRT_XP_FILE *f);
+
+/* spawn / exec mode constants (match MSVC <process.h>) */
+#define UCRT_XP_P_WAIT    0
+#define UCRT_XP_P_NOWAIT  1
+#define UCRT_XP_P_OVERLAY 2
+#define UCRT_XP_P_NOWAITO 3
+#define UCRT_XP_P_DETACH  4
+
+#ifndef _INTPTR_T_DEFINED
+#ifdef _WIN64
+typedef __int64          intptr_t;
+typedef unsigned __int64 uintptr_t;
+#else
+typedef int              intptr_t;
+typedef unsigned int     uintptr_t;
+#endif
+#define _INTPTR_T_DEFINED
+#endif
+
+__declspec(dllexport) intptr_t __cdecl ucrt_xp_spawnv(int mode, const char *cmdname, const char *const *argv);
+__declspec(dllexport) intptr_t __cdecl ucrt_xp_spawnvp(int mode, const char *cmdname, const char *const *argv);
+__declspec(dllexport) intptr_t __cdecl ucrt_xp_spawnl(int mode, const char *cmdname, const char *arg0, ...);
+__declspec(dllexport) intptr_t __cdecl ucrt_xp_spawnlp(int mode, const char *cmdname, const char *arg0, ...);
+__declspec(dllexport) intptr_t __cdecl ucrt_xp_execv(const char *cmdname, const char *const *argv);
+__declspec(dllexport) intptr_t __cdecl ucrt_xp_execvp(const char *cmdname, const char *const *argv);
+__declspec(dllexport) intptr_t __cdecl ucrt_xp_execl(const char *cmdname, const char *arg0, ...);
+__declspec(dllexport) intptr_t __cdecl ucrt_xp_execlp(const char *cmdname, const char *arg0, ...);
+
+/* CRT-style thread helpers (thin CreateThread wrappers). */
+__declspec(dllexport) uintptr_t __cdecl ucrt_xp_beginthread(
+    void (__cdecl *start_address)(void *), unsigned stack_size, void *arglist);
+__declspec(dllexport) uintptr_t __cdecl ucrt_xp_beginthreadex(
+    void *security, unsigned stack_size,
+    unsigned (__stdcall *start_address)(void *), void *arglist,
+    unsigned initflag, unsigned *thrdaddr);
+__declspec(dllexport) void __cdecl ucrt_xp_endthread(void);
+__declspec(dllexport) void __cdecl ucrt_xp_endthreadex(unsigned retval);
 
 /* ------------------------------------------------------------------ */
 /* <time.h>: 64-bit time_t, thread-safe localtime/gmtime               */

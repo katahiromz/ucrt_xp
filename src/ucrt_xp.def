@@ -247,3 +247,30 @@ EXPORTS
     ucrt_xp_wcsnicoll_l                    @277
     ucrt_xp_wcsnicoll                      @278
     ucrt_xp_wcsrev                         @279
+
+    ucrt_xp_getpid                         @280
+    ucrt_xp_putenv                         @281
+    ucrt_xp_pipe                           @282
+    ucrt_xp_popen                          @283
+    ucrt_xp_pclose                         @284
+    ucrt_xp_spawnv                         @285
+    ucrt_xp_spawnvp                        @286
+    ucrt_xp_spawnl                         @287
+    ucrt_xp_spawnlp                        @288
+    ucrt_xp_execv                          @289
+    ucrt_xp_execvp                         @290
+    ucrt_xp_execl                          @291
+    ucrt_xp_execlp                         @292
+    ucrt_xp_beginthread                    @293
+    ucrt_xp_beginthreadex                  @294
+    ucrt_xp_endthread                      @295
+    ucrt_xp_endthreadex                    @296
+    ucrt_xp_waccess                        @297
+    ucrt_xp_wmkdir                         @298
+    ucrt_xp_wchdir                         @299
+    ucrt_xp_wgetcwd                        @300
+    ucrt_xp_wremove                        @301
+    ucrt_xp_wrename                        @302
+    ucrt_xp_wgetenv                        @303
+    ucrt_xp_wputenv                        @304
+    ucrt_xp_wsystem                        @305
