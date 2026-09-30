@@ -376,16 +376,19 @@ static HANDLE popen_unregister(UCRT_XP_FILE *f)
 }
 
 /* mode: "r" reads child stdout; "w" writes child stdin. Optional 't'/'b'
- * for text/binary (default text). Returns a UCRT_XP_FILE* or NULL. */
+ * for text/binary (default text). Runs via COMSPEC (/c), matching MSVC
+ * _popen so shell metacharacters work. Returns a UCRT_XP_FILE* or NULL. */
 __declspec(dllexport) UCRT_XP_FILE* __cdecl ucrt_xp_popen(const char *command, const char *mode)
 {
     SECURITY_ATTRIBUTES sa;
-    HANDLE child_rd = NULL, child_wr = NULL;
+    HANDLE pipe_rd = NULL, pipe_wr = NULL;
     HANDLE parent_end = NULL, child_end = NULL;
     STARTUPINFOA si;
     PROCESS_INFORMATION pi;
-    char *cmd_copy;
-    size_t len;
+    char comspec[MAX_PATH];
+    char *cmdline;
+    size_t cmd_len, cl_len;
+    DWORD n;
     int reading;
     int text_mode = 1;
     int fd;
@@ -404,28 +407,40 @@ __declspec(dllexport) UCRT_XP_FILE* __cdecl ucrt_xp_popen(const char *command, c
     sa.nLength = sizeof(sa);
     sa.bInheritHandle = TRUE;
 
-    if (!CreatePipe(&child_rd, &child_wr, &sa, 0)) return NULL;
+    if (!CreatePipe(&pipe_rd, &pipe_wr, &sa, 0)) return NULL;
 
     if (reading) {
-        /* parent reads from child_rd; child writes to child_wr */
-        parent_end = child_rd;
-        child_end  = child_wr;
+        parent_end = pipe_rd;
+        child_end  = pipe_wr;
         SetHandleInformation(parent_end, HANDLE_FLAG_INHERIT, 0);
     } else {
-        /* parent writes to child_wr; child reads from child_rd */
-        parent_end = child_wr;
-        child_end  = child_rd;
+        parent_end = pipe_wr;
+        child_end  = pipe_rd;
         SetHandleInformation(parent_end, HANDLE_FLAG_INHERIT, 0);
     }
 
-    len = ucrt_xp_strlen(command);
-    cmd_copy = (char *)ucrt_xp_malloc(len + 1);
-    if (!cmd_copy) {
-        CloseHandle(child_rd);
-        CloseHandle(child_wr);
+    n = GetEnvironmentVariableA("COMSPEC", comspec, MAX_PATH);
+    if (n == 0 || n >= MAX_PATH) {
+        /* Fallback used on minimal embeds */
+        CopyMemory(comspec, "cmd.exe", 8);
+    }
+
+    /* cmdline = comspec + " /c " + command */
+    cmd_len = ucrt_xp_strlen(command);
+    cl_len = ucrt_xp_strlen(comspec) + 4 + cmd_len;
+    cmdline = (char *)ucrt_xp_malloc(cl_len + 1);
+    if (!cmdline) {
+        CloseHandle(pipe_rd);
+        CloseHandle(pipe_wr);
         return NULL;
     }
-    CopyMemory(cmd_copy, command, len + 1);
+    {
+        char *p = cmdline;
+        size_t L = ucrt_xp_strlen(comspec);
+        CopyMemory(p, comspec, L); p += L;
+        CopyMemory(p, " /c ", 4); p += 4;
+        CopyMemory(p, command, cmd_len + 1);
+    }
 
     ZeroMemory(&si, sizeof(si));
     si.cb = sizeof(si);
@@ -433,17 +448,24 @@ __declspec(dllexport) UCRT_XP_FILE* __cdecl ucrt_xp_popen(const char *command, c
     si.hStdInput  = reading ? GetStdHandle(STD_INPUT_HANDLE)  : child_end;
     si.hStdOutput = reading ? child_end : GetStdHandle(STD_OUTPUT_HANDLE);
     si.hStdError  = GetStdHandle(STD_ERROR_HANDLE);
+    /* Hide the console window of the shell child when possible. */
+    si.dwFlags |= STARTF_USESHOWWINDOW;
+    si.wShowWindow = SW_HIDE;
     ZeroMemory(&pi, sizeof(pi));
 
-    if (!CreateProcessA(NULL, cmd_copy, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
-        ucrt_xp_free(cmd_copy);
-        CloseHandle(child_rd);
-        CloseHandle(child_wr);
-        return NULL;
+    if (!CreateProcessA(comspec, cmdline, NULL, NULL, TRUE,
+                        CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+        /* Retry without CREATE_NO_WINDOW for very old shells. */
+        if (!CreateProcessA(comspec, cmdline, NULL, NULL, TRUE,
+                            0, NULL, NULL, &si, &pi)) {
+            ucrt_xp_free(cmdline);
+            CloseHandle(pipe_rd);
+            CloseHandle(pipe_wr);
+            return NULL;
+        }
     }
-    ucrt_xp_free(cmd_copy);
+    ucrt_xp_free(cmdline);
     CloseHandle(pi.hThread);
-    /* Parent no longer needs the child's end of the pipe. */
     CloseHandle(child_end);
 
     fd = ucrt_xp__register_fd(parent_end, text_mode, 0);
@@ -708,26 +730,82 @@ __declspec(dllexport) intptr_t __cdecl ucrt_xp_execlp(const char *cmdname, const
 
 /* ------------------------------------------------------------------ */
 /* _beginthread / _beginthreadex / _endthread / _endthreadex           */
+/*                                                                      */
+/* Per-thread CRT attach/detach mirrors what MSVC's CRT does around     */
+/* CreateThread: force errno TLS and thread locale into existence, run  */
+/* the user start routine, then tear down heap thread caches / errno    */
+/* cell. _beginthread auto-ends the thread when the start function      */
+/* returns; _beginthreadex returns the exit code from the stdcall       */
+/* start routine via ExitThread.                                        */
 /* ------------------------------------------------------------------ */
+
+/* Free the per-thread errno cell allocated by errno_location(). */
+static void free_errno_tls(void)
+{
+    int *cell;
+    if (g_errno_tls == TLS_OUT_OF_INDEXES) return;
+    cell = (int *)TlsGetValue(g_errno_tls);
+    if (cell) {
+        ucrt_xp_free(cell);
+        TlsSetValue(g_errno_tls, NULL);
+    }
+}
+
+/* Internal: ensure this thread has CRT thread-local state. */
+static void thread_crt_attach(void)
+{
+    /* errno: allocates TLS cell on first touch, then zero it. */
+    *ucrt_xp_errno_location() = 0;
+    /* locale: binds thread to the default "C" locale object. */
+    (void)ucrt_xp_locale_get_thread();
+}
+
+static void thread_crt_detach(void)
+{
+    /* Return any per-thread heap caches. */
+    ucrt_xp_heap_thread_cleanup();
+    /* Drop thread-local locale reference if any. */
+    ucrt_xp_locale_set_thread(NULL);
+    /* Free errno TLS cell so recycled TIDs start clean. */
+    free_errno_tls();
+}
 
 typedef struct BeginThreadCtx {
     void (__cdecl *start_cdecl)(void *);
     unsigned (__stdcall *start_stdcall)(void *);
     void *arg;
     int is_stdcall;
+    int auto_close_handle; /* _beginthread closes its handle on exit */
+    HANDLE thr_handle;
 } BeginThreadCtx;
 
 static DWORD WINAPI beginthread_trampoline(void *param)
 {
-    BeginThreadCtx ctx = *(BeginThreadCtx *)param;
+    BeginThreadCtx ctx;
+    DWORD code = 0;
+
+    ctx = *(BeginThreadCtx *)param;
+    /* param was heap-allocated by the parent; free before running user
+     * code so a long-lived thread does not pin the small block. */
     ucrt_xp_free(param);
+
+    thread_crt_attach();
+
     if (ctx.is_stdcall) {
-        unsigned code = ctx.start_stdcall(ctx.arg);
-        return (DWORD)code;
+        code = (DWORD)ctx.start_stdcall(ctx.arg);
     } else {
         ctx.start_cdecl(ctx.arg);
-        return 0;
+        code = 0;
     }
+
+    thread_crt_detach();
+
+    /* _beginthread: library closes the thread handle (MSVC behavior). */
+    if (ctx.auto_close_handle && ctx.thr_handle)
+        CloseHandle(ctx.thr_handle);
+
+    ExitThread(code);
+    return code; /* not reached */
 }
 
 __declspec(dllexport) uintptr_t __cdecl ucrt_xp_beginthread(
@@ -744,14 +822,20 @@ __declspec(dllexport) uintptr_t __cdecl ucrt_xp_beginthread(
     ctx->start_stdcall = NULL;
     ctx->arg = arglist;
     ctx->is_stdcall = 0;
+    ctx->auto_close_handle = 1;
+    ctx->thr_handle = NULL;
 
-    h = CreateThread(NULL, stack_size, beginthread_trampoline, ctx, 0, &tid);
+    /* CREATE_SUSPENDED so we can store the handle into ctx before run. */
+    h = CreateThread(NULL, stack_size, beginthread_trampoline, ctx,
+                     CREATE_SUSPENDED, &tid);
     if (!h) {
         ucrt_xp_free(ctx);
         return (uintptr_t)-1L;
     }
-    /* MSVC _beginthread returns handle; library owns close on thread end
-     * in the real CRT. We return the handle; caller may CloseHandle. */
+    ctx->thr_handle = h;
+    ResumeThread(h);
+    /* MSVC returns the handle; with auto_close the handle becomes invalid
+     * after the thread exits - callers must not CloseHandle it. */
     return (uintptr_t)h;
 }
 
@@ -764,6 +848,7 @@ __declspec(dllexport) uintptr_t __cdecl ucrt_xp_beginthreadex(
     HANDLE h;
     DWORD tid;
     LPSECURITY_ATTRIBUTES sa = (LPSECURITY_ATTRIBUTES)security;
+    DWORD flags = (DWORD)initflag;
 
     if (!start_address) return 0;
     ctx = (BeginThreadCtx *)ucrt_xp_malloc(sizeof(BeginThreadCtx));
@@ -772,8 +857,10 @@ __declspec(dllexport) uintptr_t __cdecl ucrt_xp_beginthreadex(
     ctx->start_stdcall = start_address;
     ctx->arg = arglist;
     ctx->is_stdcall = 1;
+    ctx->auto_close_handle = 0; /* caller owns CloseHandle */
+    ctx->thr_handle = NULL;
 
-    h = CreateThread(sa, stack_size, beginthread_trampoline, ctx, initflag, &tid);
+    h = CreateThread(sa, stack_size, beginthread_trampoline, ctx, flags, &tid);
     if (!h) {
         ucrt_xp_free(ctx);
         return 0;
@@ -784,10 +871,13 @@ __declspec(dllexport) uintptr_t __cdecl ucrt_xp_beginthreadex(
 
 __declspec(dllexport) void __cdecl ucrt_xp_endthread(void)
 {
+    thread_crt_detach();
     ExitThread(0);
 }
 
 __declspec(dllexport) void __cdecl ucrt_xp_endthreadex(unsigned retval)
 {
+    thread_crt_detach();
     ExitThread(retval);
 }
+
